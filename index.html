@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>Silent Fragments</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,6 +15,12 @@
       -ms-user-select: none;
       user-select: none;
       cursor: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    html {
+      overflow: hidden;
     }
     img {
       pointer-events: none;
@@ -22,6 +28,13 @@
     }
     * {
       cursor: none !important;
+      box-sizing: border-box;
+    }
+    /* Mobile viewport fix */
+    @supports (height: 100dvh) {
+      .full-height {
+        height: 100dvh !important;
+      }
     }
   </style>
 </head>
@@ -366,7 +379,7 @@
 
       return (
         <div 
-          className="w-screen h-screen bg-white relative fixed inset-0" 
+          className="w-screen bg-white relative full-height" 
           style={{ 
             cursor: 'none',
             overflow: 'hidden',
@@ -374,7 +387,9 @@
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0
+            bottom: 0,
+            height: '100dvh',
+            minHeight: '-webkit-fill-available'
           }}
         >
           {/* Custom cursor - hide on mobile */}
@@ -411,10 +426,11 @@
 
           {!showIntro && currentPhoto && (
             <div 
-              className="w-full h-full flex flex-col items-center justify-between"
+              className="w-full flex flex-col items-center justify-between"
               style={{
-                padding: isMobile ? '16px 12px' : '24px',
-                paddingBottom: isMobile ? '12px' : '24px'
+                height: '100%',
+                padding: isMobile ? '12px 12px 8px 12px' : '24px',
+                overflow: 'hidden'
               }}
             >
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}>
@@ -424,10 +440,12 @@
               </div>
 
               <div 
-                className="flex-1 flex items-center justify-center w-full cursor-pointer"
+                className="flex items-center justify-center w-full cursor-pointer"
                 style={{ 
+                  flex: '1 1 auto',
                   maxWidth: isMobile ? '100%' : '42rem',
                   minHeight: 0,
+                  overflow: 'hidden',
                   padding: isMobile ? '8px 0' : '16px 0'
                 }}
                 onTouchStart={handleTouchStart}
@@ -440,7 +458,7 @@
                   className="object-contain"
                   style={{ 
                     maxWidth: '100%',
-                    maxHeight: isMobile ? 'calc(100vh - 140px)' : '70vh',
+                    maxHeight: '100%',
                     boxShadow: '0 4px 30px rgba(0, 0, 0, 0.12)',
                     touchAction: 'pan-x pan-y pinch-zoom'
                   }}
@@ -450,7 +468,7 @@
               <div 
                 className="w-full flex-shrink-0"
                 style={{
-                  padding: isMobile ? '12px 12px 16px 12px' : '12px 12px 16px 12px'
+                  paddingTop: isMobile ? '8px' : '12px'
                 }}
               >
                 <div className="flex justify-between items-center w-full">
