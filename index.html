@@ -14,10 +14,14 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      cursor: none;
     }
     img {
       pointer-events: none;
       -webkit-user-drag: none;
+    }
+    * {
+      cursor: none !important;
     }
   </style>
 </head>
@@ -45,6 +49,8 @@
       const [showMergedMessage, setShowMergedMessage] = useState(false);
       const [showContactSheet, setShowContactSheet] = useState(false);
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
+      const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+      const [isHoveringClickable, setIsHoveringClickable] = useState(false);
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
@@ -88,6 +94,19 @@
           setShowIntro(false);
         }, 1500);
         return () => clearTimeout(timer);
+      }, []);
+
+      useEffect(() => {
+        const handleMouseMove = (e) => {
+          setCursorPosition({ x: e.clientX, y: e.clientY });
+          
+          const target = e.target;
+          const isClickable = target.closest('button, a, .cursor-pointer') !== null;
+          setIsHoveringClickable(isClickable);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
       const handleTouchStart = (e) => {
@@ -179,7 +198,22 @@
       const currentPhoto = photos[randomOrder[currentPhotoIndex]];
 
       return (
-        <div className="w-screen h-screen bg-white overflow-hidden relative">
+        <div className="w-screen h-screen bg-white overflow-hidden relative" style={{ cursor: 'none' }}>
+          <div
+            className="fixed pointer-events-none"
+            style={{
+              left: `${cursorPosition.x}px`,
+              top: `${cursorPosition.y}px`,
+              transform: 'translate(-50%, -50%)',
+              width: '10px',
+              height: '10px',
+              backgroundColor: isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)',
+              borderRadius: '50%',
+              transition: 'background-color 0.2s ease',
+              zIndex: 10000
+            }}
+          />
+
           <div
             className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
               showIntro ? 'opacity-100' : 'opacity-0'
