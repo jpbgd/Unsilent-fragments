@@ -48,39 +48,30 @@
       const touchStartY = useRef(0);
 
       useEffect(() => {
-        const fetchPhotos = async () => {
-          try {
-            const apiUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents`;
-            const response = await fetch(apiUrl);
-            const files = await response.json();
-            
-            const imageFiles = files.filter(file => 
-              /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name)
-            );
-            
-            const photosList = imageFiles.map(file => {
-              const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-              const parts = nameWithoutExt.split('_');
-              const title = parts[0] || 'Untitled';
-              const date = parts[1] || '';
-              
-              return {
-                id: file.sha,
-                url: `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/${file.name}`,
-                title: title,
-                date: date
-              };
-            });
-            
-            setPhotos(photosList);
-            setLoading(false);
-          } catch (error) {
-            console.error('Error loading photos:', error);
-            setLoading(false);
-          }
-        };
-
-        fetchPhotos();
+        const photoFiles = [
+          'Untitled_250619.jpg',
+          'Untitled_241221.jpg',
+          'Untitiled_241208.jpg',
+          'Untitiled_241115.jpg',
+          'Untitiled_240714.jpg'
+        ];
+        
+        const photosList = photoFiles.map((fileName, index) => {
+          const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+          const parts = nameWithoutExt.split('_');
+          const title = parts[0] || 'Untitled';
+          const date = parts[1] || '';
+          
+          return {
+            id: index,
+            url: `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/${fileName}`,
+            title: title,
+            date: date
+          };
+        });
+        
+        setPhotos(photosList);
+        setLoading(false);
       }, []);
 
       useEffect(() => {
