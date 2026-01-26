@@ -161,9 +161,13 @@
       return (
         <div className="w-screen h-screen bg-white overflow-hidden relative">
           <div
-            className={`absolute inset-0 bg-white flex items-center justify-center transition-opacity duration-500 z-50 ${
-              showIntro ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
+              showIntro ? 'opacity-100' : 'opacity-0'
             }`}
+            style={{ 
+              transition: 'opacity 1500ms ease-out',
+              pointerEvents: showIntro ? 'auto' : 'none'
+            }}
           >
             <h1 className="text-gray-900 text-4xl font-light tracking-wider">
               {projectTitle}
@@ -188,10 +192,11 @@
                   src={currentPhoto.url}
                   alt={currentPhoto.title}
                   className="max-w-full max-h-full object-contain"
+                  style={{ boxShadow: '0 2px 20px rgba(0, 0, 0, 0.08)' }}
                 />
               </div>
 
-              <div className="w-full flex justify-between items-center mb-4 px-6">
+              <div className="w-full flex justify-center items-center mb-4 px-6 relative">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -201,7 +206,7 @@
                 >
                   Share your thoughts
                 </button>
-                <p className="text-gray-900 text-sm font-light italic opacity-70">
+                <p className="text-gray-900 text-sm font-light italic opacity-70 absolute right-6">
                   {currentPhoto.title}, {currentPhoto.date}
                 </p>
               </div>
