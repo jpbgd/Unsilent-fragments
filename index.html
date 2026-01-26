@@ -101,6 +101,12 @@
       useEffect(() => {
         const handleMouseMove = (e) => {
           setCursorPosition({ x: e.clientX, y: e.clientY });
+          
+          const target = e.target;
+          const isClickable = target.closest('button, [role="button"], a') || 
+                             target.style.cursor === 'pointer' ||
+                             target.classList.contains('cursor-pointer');
+          setIsHoveringClickable(!!isClickable);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -238,16 +244,17 @@
       return (
         <div className="w-screen h-screen bg-white overflow-hidden relative" style={{ cursor: 'none' }}>
           <div
-            className="fixed pointer-events-none z-[9999] transition-all duration-150"
+            className="fixed pointer-events-none z-[9999]"
             style={{
               left: `${cursorPosition.x}px`,
               top: `${cursorPosition.y}px`,
               transform: 'translate(-50%, -50%)',
-              width: '20px',
-              height: '20px',
-              border: '1px solid rgba(0, 0, 0, 0.4)',
-              backgroundColor: isHoveringClickable ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
-              borderRadius: '50%'
+              width: '10px',
+              height: '10px',
+              border: `1px solid ${isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)'}`,
+              backgroundColor: 'transparent',
+              borderRadius: '50%',
+              transition: 'border-color 0.2s ease'
             }}
           />
 
@@ -474,6 +481,9 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<PhotoViewer />);
+  </script>
+</body>
+</html>
   </script>
 </body>
 </html>
