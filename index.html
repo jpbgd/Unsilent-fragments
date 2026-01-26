@@ -60,9 +60,11 @@
       const [zIndexOrder, setZIndexOrder] = useState([]);
       const longPressTimer = useRef(null);
       const [isLongPress, setIsLongPress] = useState(false);
+      const wasDragging = useRef(false);
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
+      const touchStartTime = useRef(0);
 
       // Detect mobile
       useEffect(() => {
@@ -190,6 +192,7 @@
         }
         touchStartX.current = e.touches[0].clientX;
         touchStartY.current = e.touches[0].clientY;
+        touchStartTime.current = Date.now();
       };
 
       const handleTouchEnd = (e) => {
@@ -198,12 +201,19 @@
           return;
         }
         
+        // Si hay más de un dedo, es zoom - no cambiar imagen
+        if (e.touches && e.touches.length > 0) {
+          return;
+        }
+        
         const touchEndX = e.changedTouches[0].clientX;
         const touchEndY = e.changedTouches[0].clientY;
-        const diffX = touchStartX.current - touchEndX;
-        const diffY = touchStartY.current - touchEndY;
+        const diffX = Math.abs(touchStartX.current - touchEndX);
+        const diffY = Math.abs(touchStartY.current - touchEndY);
+        const touchDuration = Date.now() - touchStartTime.current;
 
-        if (Math.abs(diffX) > 50 || Math.abs(diffY) > 50) {
+        // Solo cambiar imagen con tap (movimiento menor a 10px y duración menor a 300ms)
+        if (diffX < 10 && diffY < 10 && touchDuration < 300) {
           handleNextPhoto();
         }
       };
@@ -222,11 +232,14 @@
       };
 
       const handleThumbnailClick = (index) => {
-        if (!isLongPress && draggingIndex === null) {
+        // Solo maximizar si NO fue un drag y NO es long press
+        if (!isLongPress && !wasDragging.current) {
           setCurrentPhotoIndex(randomOrder.indexOf(index));
           setShowContactSheet(false);
         }
+        // Reset flags
         setIsLongPress(false);
+        wasDragging.current = false;
       };
 
       // Desktop drag handlers
@@ -234,12 +247,12 @@
         e.preventDefault();
         e.stopPropagation();
         
-        const rect = e.currentTarget.getBoundingClientRect();
         setDragOffset({
           x: e.clientX - imagePositions[index].x,
           y: e.clientY - imagePositions[index].y
         });
         setDraggingIndex(index);
+        wasDragging.current = true;
         
         // Bring to front
         setZIndexOrder(prev => {
@@ -248,13 +261,14 @@
         });
       };
 
-      // Mobile touch drag handlers
+      // Mobile touch drag handlers for contact sheet
       const handleImageTouchStart = (e, index) => {
         const touch = e.touches[0];
         
         // Start long press timer
         longPressTimer.current = setTimeout(() => {
           setIsLongPress(true);
+          wasDragging.current = true;
           setDragOffset({
             x: touch.clientX - imagePositions[index].x,
             y: touch.clientY - imagePositions[index].y
@@ -294,10 +308,14 @@
         }
         
         if (draggingIndex === index) {
+          e.preventDefault();
+          e.stopPropagation();
+          setDraggingIndex(null);
+          // Keep wasDragging true so click doesn't fire
           setTimeout(() => {
-            setDraggingIndex(null);
             setIsLongPress(false);
-          }, 50);
+            wasDragging.current = false;
+          }, 100);
         }
       };
 
@@ -430,43 +448,43 @@
               </div>
 
               <div 
-                className="w-full flex justify-between items-center relative flex-shrink-0"
+                className="w-full flex-shrink-0"
                 style={{
-                  paddingLeft: isMobile ? '8px' : '12px',
-                  paddingRight: isMobile ? '8px' : '12px',
-                  marginBottom: isMobile ? '4px' : '16px'
+                  padding: isMobile ? '12px 12px 16px 12px' : '12px 12px 16px 12px'
                 }}
               >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowContactSheet(true);
-                  }}
-                  className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"
-                >
-                  <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="7" cy="7" r="2.5"/>
-                    <circle cx="17" cy="7" r="2.5"/>
-                    <circle cx="7" cy="17" r="2.5"/>
-                    <circle cx="17" cy="17" r="2.5"/>
-                  </svg>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowCommentBox(true);
-                  }}
-                  className="text-gray-900 font-light opacity-70 hover:opacity-100 transition-opacity absolute left-1/2 transform -translate-x-1/2"
-                  style={{ fontSize: isMobile ? '10px' : '12px' }}
-                >
-                  Share your thoughts
-                </button>
-                <p 
-                  className="text-gray-900 font-light italic opacity-70"
-                  style={{ fontSize: isMobile ? '10px' : '12px' }}
-                >
-                  {currentPhoto.title}, {currentPhoto.date}
-                </p>
+                <div className="flex justify-between items-center w-full">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowContactSheet(true);
+                    }}
+                    className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0"
+                  >
+                    <svg width={isMobile ? "16" : "16"} height={isMobile ? "16" : "16"} viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="7" cy="7" r="2.5"/>
+                      <circle cx="17" cy="7" r="2.5"/>
+                      <circle cx="7" cy="17" r="2.5"/>
+                      <circle cx="17" cy="17" r="2.5"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCommentBox(true);
+                    }}
+                    className="text-gray-900 font-light opacity-70 hover:opacity-100 transition-opacity"
+                    style={{ fontSize: isMobile ? '11px' : '12px' }}
+                  >
+                    Share your thoughts
+                  </button>
+                  <p 
+                    className="text-gray-900 font-light italic opacity-70 flex-shrink-0"
+                    style={{ fontSize: isMobile ? '11px' : '12px' }}
+                  >
+                    {currentPhoto.title}, {currentPhoto.date}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -591,11 +609,22 @@
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!isDragging) {
+                        // Solo si no estaba arrastrando
+                        if (!wasDragging.current && !isLongPress) {
                           handleThumbnailClick(index);
                         }
                       }}
                       onMouseDown={(e) => !isMobile && handleImageMouseDown(e, index)}
+                      onMouseUp={(e) => {
+                        if (!isMobile && draggingIndex === index) {
+                          e.stopPropagation();
+                          setDraggingIndex(null);
+                          // Prevenir click después de drag
+                          setTimeout(() => {
+                            wasDragging.current = false;
+                          }, 100);
+                        }
+                      }}
                       onMouseEnter={() => !isMobile && setHoveredThumbnail(index)}
                       onMouseLeave={() => !isMobile && setHoveredThumbnail(null)}
                       onTouchStart={(e) => handleImageTouchStart(e, index)}
