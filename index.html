@@ -104,7 +104,6 @@
           
           const target = e.target;
           const isClickable = target.closest('button, [role="button"], a') || 
-                             target.style.cursor === 'pointer' ||
                              target.classList.contains('cursor-pointer');
           setIsHoveringClickable(!!isClickable);
         };
@@ -192,25 +191,32 @@
         img.crossOrigin = 'Anonymous';
         img.src = imageUrl;
         img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          let brightness = 0;
-          
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            brightness += (r + g + b) / 3;
+          try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            let brightness = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              brightness += (r + g + b) / 3;
+            }
+            
+            brightness = brightness / (data.length / 4);
+            setImageBrightness(brightness > 127 ? 'light' : 'dark');
+          } catch (error) {
+            setImageBrightness('light');
           }
-          
-          brightness = brightness / (data.length / 4);
-          setImageBrightness(brightness > 127 ? 'light' : 'dark');
+        };
+        img.onerror = () => {
+          setImageBrightness('light');
         };
       };
 
@@ -254,8 +260,7 @@
               backgroundColor: isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)',
               borderRadius: '50%',
               transition: 'background-color 0.2s ease',
-              zIndex: 9999,
-              mixBlendMode: 'normal'
+              zIndex: 9999
             }}
           />
 
@@ -275,7 +280,7 @@
 
           {!showIntro && currentPhoto && (
             <div className="w-full h-full flex flex-col items-center justify-between p-6">
-              <div className="w-full text-center cursor-pointer" onClick={handleTitleClick} onMouseEnter={() => setIsHoveringClickable(true)} onMouseLeave={() => setIsHoveringClickable(false)}>
+              <div className="w-full text-center cursor-pointer" onClick={handleTitleClick}>
                 <h2 className="text-gray-900 text-base font-light tracking-wide opacity-70">
                   {projectTitle}
                 </h2>
@@ -286,3 +291,160 @@
                 style={{ maxHeight: '70vh' }}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
+                onClick={handleNextPhoto}
+              >
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.title}
+                  className="max-w-full max-h-full object-contain"
+                  style={{ 
+                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.12)',
+                    touchAction: 'pan-x pan-y pinch-zoom'
+                  }}
+                />
+              </div>
+
+              <div className="w-full flex justify-between items-center mb-4 px-3 relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowContactSheet(true);
+                  }}
+                  className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="7" cy="7" r="2.5"/>
+                    <circle cx="17" cy="7" r="2.5"/>
+                    <circle cx="7" cy="17" r="2.5"/>
+                    <circle cx="17" cy="17" r="2.5"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCommentBox(true);
+                  }}
+                  className="text-gray-900 text-xs font-light opacity-70 hover:opacity-100 transition-opacity absolute left-1/2 transform -translate-x-1/2"
+                >
+                  Share your thoughts
+                </button>
+                <p className="text-gray-900 text-xs font-light italic opacity-70">
+                  {currentPhoto.title}, {currentPhoto.date}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {showCommentBox && (
+            <div
+              className="fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)'
+              }}
+              onClick={() => setShowCommentBox(false)}
+            >
+              <div className="w-11/12 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
+                <div className="relative h-32">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {!showMergedMessage ? (
+                      <>
+                        {!commentText && (
+                          <span 
+                            className={`text-sm absolute pointer-events-none ${
+                              imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
+                            }`}
+                          >
+                            write down what you're thinking...
+                          </span>
+                        )}
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          className={`w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center ${
+                            imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}
+                          style={{ lineHeight: '128px' }}
+                          autoFocus
+                        />
+                      </>
+                    ) : (
+                      <p className={`text-sm font-light ${
+                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
+                      }`}>
+                        Words merged with image work
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4" style={{ height: '24px' }}>
+                  {!showMergedMessage && (
+                    <button
+                      onClick={handleSubmitComment}
+                      className={`opacity-70 hover:opacity-100 transition-opacity ${
+                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {dissolving && (
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+              <p
+                className="text-gray-900 text-lg transition-all duration-1000"
+                style={{
+                  opacity: dissolving ? 0 : 1,
+                  filter: dissolving ? 'blur(8px)' : 'blur(0px)',
+                  transform: dissolving ? 'scale(1.1)' : 'scale(1)'
+                }}
+              >
+                {dissolveText}
+              </p>
+            </div>
+          )}
+
+          {showContactSheet && (
+            <div
+              className="fixed inset-0 bg-white z-50 overflow-hidden"
+              onClick={() => setShowContactSheet(false)}
+            >
+              <div className="w-full h-full relative">
+                {photos.map((photo, index) => {
+                  const positions = [
+                    { top: '5%', left: '10%', width: '35%' },
+                    { top: '15%', right: '5%', width: '40%' },
+                    { top: '45%', left: '5%', width: '30%' },
+                    { bottom: '10%', right: '15%', width: '35%' },
+                    { top: '60%', left: '40%', width: '38%' }
+                  ];
+                  const pos = positions[index % positions.length];
+                  const isOtherHovered = hoveredThumbnail !== null && hoveredThumbnail !== index;
+                  
+                  return (
+                    <div
+                      key={photo.id}
+                      className="absolute cursor-pointer transition-all duration-300"
+                      style={{
+                        ...pos,
+                        filter: isOtherHovered ? 'blur(4px)' : 'blur(0px)',
+                        opacity: isOtherHovered ? 0.3 : 1
+                      }}
+                      onClick
