@@ -251,10 +251,9 @@
               transform: 'translate(-50%, -50%)',
               width: '10px',
               height: '10px',
-              border: `1px solid ${isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)'}`,
-              backgroundColor: 'transparent',
+              backgroundColor: isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)',
               borderRadius: '50%',
-              transition: 'border-color 0.2s ease'
+              transition: 'background-color 0.2s ease'
             }}
           />
 
@@ -481,9 +480,6 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<PhotoViewer />);
-  </script>
-</body>
-</html>
   </script>
 </body>
 </html>
