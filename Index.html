@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Silent Fragments&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://unpkg.com/@babel/standalone/babel.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="root"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script type="text/babel"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const { useState, useEffect, useRef } = React;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const PhotoViewer = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const CLOUDINARY_CLOUD_NAME = 'dk1ro5jqc';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const CLOUDINARY_FOLDER = 'silent fragments';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const projectTitle = "Silent Fragments";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [photos, setPhotos] = useState([]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [loading, setLoading] = useState(true);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [showIntro, setShowIntro] = useState(true);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [randomOrder, setRandomOrder] = useState([]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [showCommentBox, setShowCommentBox] = useState(false);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [commentText, setCommentText] = useState('');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [commentSubmitted, setCommentSubmitted] = useState(false);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [dissolving, setDissolving] = useState(false);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [dissolveText, setDissolveText] = useState('');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const [showMergedMessage, setShowMergedMessage] = useState(false);</p>
+<p class="p2"><span class="Apple-converted-space">      </span></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const touchStartX = useRef(0);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const touchStartY = useRef(0);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const fetchPhotos = async () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const response = await fetch(</p>
+<p class="p1"><span class="Apple-converted-space">              </span>`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${encodeURIComponent(CLOUDINARY_FOLDER)}.json`</p>
+<p class="p1"><span class="Apple-converted-space">            </span>);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const data = await response.json();</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const photosList = data.resources.map((resource) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">              </span>const publicId = resource.public_id.split('/').pop();</p>
+<p class="p1"><span class="Apple-converted-space">              </span>const parts = publicId.split('_');</p>
+<p class="p1"><span class="Apple-converted-space">              </span>const title = parts[0] || 'Untitled';</p>
+<p class="p1"><span class="Apple-converted-space">              </span>const date = parts[1] || '';</p>
+<p class="p2"><span class="Apple-converted-space">              </span></p>
+<p class="p1"><span class="Apple-converted-space">              </span>return {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>id: resource.asset_id,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${resource.public_id}`,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>title: title,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>date: date</p>
+<p class="p1"><span class="Apple-converted-space">              </span>};</p>
+<p class="p1"><span class="Apple-converted-space">            </span>});</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>setPhotos(photosList);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setLoading(false);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>} catch (error) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>console.error('Error loading photos:', error);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setLoading(false);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>fetchPhotos();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}, []);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (photos.length &gt; 0) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const shuffled = [...Array(photos.length).keys()].sort(() =&gt; Math.random() - 0.5);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setRandomOrder(shuffled);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}, [photos]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const timer = setTimeout(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setShowIntro(false);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}, 2000);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return () =&gt; clearTimeout(timer);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}, []);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const handleTouchStart = (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>touchStartX.current = e.touches[0].clientX;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>touchStartY.current = e.touches[0].clientY;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const handleTouchEnd = (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const touchEndX = e.changedTouches[0].clientX;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const touchEndY = e.changedTouches[0].clientY;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const diffX = touchStartX.current - touchEndX;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const diffY = touchStartY.current - touchEndY;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (Math.abs(diffX) &gt; 50 || Math.abs(diffY) &gt; 50) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>handleNextPhoto();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const handleNextPhoto = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setCommentSubmitted(false);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setShowMergedMessage(false);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setCurrentPhotoIndex((prev) =&gt; (prev + 1) % randomOrder.length);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const handleSubmitComment = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!commentText.trim()) return;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>setDissolveText(commentText);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setDissolving(true);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const currentPhoto = photos[randomOrder[currentPhotoIndex]];</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const comment = {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>photoTitle: currentPhoto.title,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>photoDate: currentPhoto.date,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>text: commentText,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>timestamp: new Date().toISOString()</p>
+<p class="p1"><span class="Apple-converted-space">        </span>};</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.log('Comment to save:', comment);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>setTimeout(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setDissolving(false);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setDissolveText('');</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setCommentText('');</p>
+<p class="p1"><span class="Apple-converted-space">          </span>setShowMergedMessage(true);</p>
+<p class="p2"><span class="Apple-converted-space">          </span></p>
+<p class="p1"><span class="Apple-converted-space">          </span>setTimeout(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setShowMergedMessage(false);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setShowCommentBox(false);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setCommentSubmitted(true);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}, 2000);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}, 1800);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (loading) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return (</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="w-screen h-screen bg-white flex items-center justify-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;p className="text-gray-900 text-sm"&gt;Loading...&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (photos.length === 0) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return (</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="w-screen h-screen bg-white flex items-center justify-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;p className="text-gray-900 text-sm"&gt;No photos found&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const currentPhoto = photos[randomOrder[currentPhotoIndex]];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>return (</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="w-screen h-screen bg-white overflow-hidden relative"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div</p>
+<p class="p1"><span class="Apple-converted-space">            </span>className={`absolute inset-0 bg-white flex items-center justify-center transition-opacity duration-500 z-50 ${</p>
+<p class="p1"><span class="Apple-converted-space">              </span>showIntro ? 'opacity-100' : 'opacity-0 pointer-events-none'</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}`}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h1 className="text-gray-900 text-4xl font-light tracking-wider"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>{projectTitle}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>{!showIntro &amp;&amp; currentPhoto &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div</p>
+<p class="p1"><span class="Apple-converted-space">              </span>className="w-full h-full flex flex-col items-center justify-between p-6 cursor-pointer"</p>
+<p class="p1"><span class="Apple-converted-space">              </span>onTouchStart={handleTouchStart}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>onTouchEnd={handleTouchEnd}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>onClick={handleNextPhoto}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="w-full text-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;h2 className="text-gray-900 text-base font-light tracking-wide opacity-70"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>{projectTitle}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="flex-1 flex items-center justify-center w-full max-w-2xl"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;img</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>src={currentPhoto.url}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>alt={currentPhoto.title}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="max-w-full max-h-full object-contain"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="w-full flex justify-between items-center mb-4 px-6"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>onClick={(e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>e.stopPropagation();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>setShowCommentBox(true);</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>}}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="text-gray-900 text-sm font-light opacity-70 hover:opacity-100 transition-opacity"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>Share your thoughts</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;p className="text-gray-900 text-sm font-light italic opacity-70"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>{currentPhoto.title}, {currentPhoto.date}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>)}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>{showCommentBox &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div</p>
+<p class="p1"><span class="Apple-converted-space">              </span>className="fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300"</p>
+<p class="p1"><span class="Apple-converted-space">              </span>style={{</p>
+<p class="p1"><span class="Apple-converted-space">                </span>backgroundColor: 'rgba(255, 255, 255, 0.4)',</p>
+<p class="p1"><span class="Apple-converted-space">                </span>backdropFilter: 'blur(10px)',</p>
+<p class="p1"><span class="Apple-converted-space">                </span>WebkitBackdropFilter: 'blur(10px)'</p>
+<p class="p1"><span class="Apple-converted-space">              </span>}}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>onClick={() =&gt; setShowCommentBox(false)}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="w-11/12 max-w-md text-center" onClick={(e) =&gt; e.stopPropagation()}&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="relative h-32"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="absolute inset-0 flex items-center justify-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{!showMergedMessage ? (</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>{!commentText &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>&lt;span className="text-gray-500 text-sm absolute pointer-events-none"&gt;write down what you're thinking...&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;textarea</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>value={commentText}</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>onChange={(e) =&gt; setCommentText(e.target.value)}</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>className="w-full h-full bg-transparent border-none outline-none text-gray-900 resize-none text-sm text-center"</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>style={{ lineHeight: '128px' }}</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>autoFocus</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>) : (</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;p className="text-gray-500 text-sm font-light"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>Words merged with image work</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex justify-center mt-4" style={{ height: '24px' }}&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>{!showMergedMessage &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>onClick={handleSubmitComment}</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;svg</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>className="w-6 h-6"</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>fill="none"</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>stroke="currentColor"</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>viewBox="0 0 24 24"</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>strokeWidth="1.5"</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;path</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>strokeLinecap="round"</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>strokeLinejoin="round"</p>
+<p class="p1"><span class="Apple-converted-space">                          </span>d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;/svg&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>)}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>{dissolving &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p</p>
+<p class="p1"><span class="Apple-converted-space">                </span>className="text-gray-900 text-lg transition-all duration-1000"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>style={{</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>opacity: dissolving ? 0 : 1,</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>filter: dissolving ? 'blur(8px)' : 'blur(0px)',</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>transform: dissolving ? 'scale(1.1)' : 'scale(1)'</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>{dissolveText}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const root = ReactDOM.createRoot(document.getElementById('root'));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>root.render(&lt;PhotoViewer /&gt;);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
