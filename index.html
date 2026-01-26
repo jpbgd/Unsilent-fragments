@@ -14,14 +14,10 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
-      cursor: none;
     }
     img {
       pointer-events: none;
       -webkit-user-drag: none;
-    }
-    * {
-      cursor: none !important;
     }
   </style>
 </head>
@@ -44,15 +40,11 @@
       const [randomOrder, setRandomOrder] = useState([]);
       const [showCommentBox, setShowCommentBox] = useState(false);
       const [commentText, setCommentText] = useState('');
-      const [commentSubmitted, setCommentSubmitted] = useState(false);
       const [dissolving, setDissolving] = useState(false);
       const [dissolveText, setDissolveText] = useState('');
       const [showMergedMessage, setShowMergedMessage] = useState(false);
-      const [imageBrightness, setImageBrightness] = useState('light');
       const [showContactSheet, setShowContactSheet] = useState(false);
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
-      const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-      const [isHoveringClickable, setIsHoveringClickable] = useState(false);
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
@@ -98,20 +90,6 @@
         return () => clearTimeout(timer);
       }, []);
 
-      useEffect(() => {
-        const handleMouseMove = (e) => {
-          setCursorPosition({ x: e.clientX, y: e.clientY });
-          
-          const target = e.target;
-          const isClickable = target.closest('button, [role="button"], a') || 
-                             target.classList.contains('cursor-pointer');
-          setIsHoveringClickable(!!isClickable);
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-      }, []);
-
       const handleTouchStart = (e) => {
         if (e.touches.length > 1) {
           setIsZooming(true);
@@ -138,7 +116,6 @@
       };
 
       const handleNextPhoto = () => {
-        setCommentSubmitted(false);
         setShowMergedMessage(false);
         setCurrentPhotoIndex((prev) => (prev + 1) % randomOrder.length);
       };
@@ -163,14 +140,12 @@
         setDissolving(true);
 
         const currentPhoto = photos[randomOrder[currentPhotoIndex]];
-        const comment = {
+        console.log('Comment:', {
           photoTitle: currentPhoto.title,
           photoDate: currentPhoto.date,
           text: commentText,
           timestamp: new Date().toISOString()
-        };
-        
-        console.log('Comment to save:', comment);
+        });
 
         setTimeout(() => {
           setDissolving(false);
@@ -181,53 +156,9 @@
           setTimeout(() => {
             setShowMergedMessage(false);
             setShowCommentBox(false);
-            setCommentSubmitted(true);
           }, 2000);
         }, 1800);
       };
-
-      const analyzeImageBrightness = (imageUrl) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.src = imageUrl;
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            let brightness = 0;
-            
-            for (let i = 0; i < data.length; i += 4) {
-              const r = data[i];
-              const g = data[i + 1];
-              const b = data[i + 2];
-              brightness += (r + g + b) / 3;
-            }
-            
-            brightness = brightness / (data.length / 4);
-            setImageBrightness(brightness > 127 ? 'light' : 'dark');
-          } catch (error) {
-            setImageBrightness('light');
-          }
-        };
-        img.onerror = () => {
-          setImageBrightness('light');
-        };
-      };
-
-      useEffect(() => {
-        if (showCommentBox && photos.length > 0 && randomOrder.length > 0) {
-          const current = photos[randomOrder[currentPhotoIndex]];
-          if (current) {
-            analyzeImageBrightness(current.url);
-          }
-        }
-      }, [showCommentBox, photos, randomOrder, currentPhotoIndex]);
 
       if (loading) {
         return (
@@ -237,7 +168,7 @@
         );
       }
 
-      if (photos.length === 0) {
+      if (photos.length === 0 || randomOrder.length === 0) {
         return (
           <div className="w-screen h-screen bg-white flex items-center justify-center">
             <p className="text-gray-900 text-sm">No photos found</p>
@@ -248,22 +179,7 @@
       const currentPhoto = photos[randomOrder[currentPhotoIndex]];
 
       return (
-        <div className="w-screen h-screen bg-white overflow-hidden relative" style={{ cursor: 'none' }}>
-          <div
-            className="fixed pointer-events-none"
-            style={{
-              left: `${cursorPosition.x}px`,
-              top: `${cursorPosition.y}px`,
-              transform: 'translate(-50%, -50%)',
-              width: '10px',
-              height: '10px',
-              backgroundColor: isHoveringClickable ? '#0F4C81' : 'rgba(0, 0, 0, 0.4)',
-              borderRadius: '50%',
-              transition: 'background-color 0.2s ease',
-              zIndex: 9999
-            }}
-          />
-
+        <div className="w-screen h-screen bg-white overflow-hidden relative">
           <div
             className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
               showIntro ? 'opacity-100' : 'opacity-0'
@@ -337,7 +253,7 @@
 
           {showCommentBox && (
             <div
-              className="fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300"
+              className="fixed inset-0 flex items-center justify-center z-50"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 backdropFilter: 'blur(2px)',
@@ -351,28 +267,20 @@
                     {!showMergedMessage ? (
                       <>
                         {!commentText && (
-                          <span 
-                            className={`text-sm absolute pointer-events-none ${
-                              imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
-                            }`}
-                          >
+                          <span className="text-gray-500 text-sm absolute pointer-events-none">
                             write down what you're thinking...
                           </span>
                         )}
                         <textarea
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
-                          className={`w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center ${
-                            imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
-                          }`}
+                          className="w-full h-full bg-transparent border-none outline-none resize-none text-gray-900 text-sm text-center"
                           style={{ lineHeight: '128px' }}
                           autoFocus
                         />
                       </>
                     ) : (
-                      <p className={`text-sm font-light ${
-                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
-                      }`}>
+                      <p className="text-gray-500 text-sm font-light">
                         Words merged with image work
                       </p>
                     )}
@@ -380,24 +288,9 @@
                 </div>
                 <div className="flex justify-center mt-4" style={{ height: '24px' }}>
                   {!showMergedMessage && (
-                    <button
-                      onClick={handleSubmitComment}
-                      className={`opacity-70 hover:opacity-100 transition-opacity ${
-                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-                        />
+                    <button onClick={handleSubmitComment} className="text-gray-900 opacity-70 hover:opacity-100">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
                       </svg>
                     </button>
                   )}
@@ -422,10 +315,7 @@
           )}
 
           {showContactSheet && (
-            <div
-              className="fixed inset-0 bg-white z-50 overflow-hidden"
-              onClick={() => setShowContactSheet(false)}
-            >
+            <div className="fixed inset-0 bg-white z-50 overflow-hidden" onClick={() => setShowContactSheet(false)}>
               <div className="w-full h-full relative">
                 {photos.map((photo, index) => {
                   const positions = [
@@ -447,4 +337,31 @@
                         filter: isOtherHovered ? 'blur(4px)' : 'blur(0px)',
                         opacity: isOtherHovered ? 0.3 : 1
                       }}
-                      onClick
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleThumbnailClick(index);
+                      }}
+                      onMouseEnter={() => setHoveredThumbnail(index)}
+                      onMouseLeave={() => setHoveredThumbnail(null)}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={photo.title}
+                        className="w-full h-auto object-cover"
+                        style={{ boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<PhotoViewer />);
+  </script>
+</body>
+</html>
