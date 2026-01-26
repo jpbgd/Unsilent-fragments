@@ -79,6 +79,8 @@
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
       const touchStartTime = useRef(0);
+      const lastPhotoChangeTime = useRef(0);
+      const isChangingPhoto = useRef(false);
 
       // Detect mobile
       useEffect(() => {
@@ -228,13 +230,36 @@
 
         // Solo cambiar imagen con tap (movimiento menor a 10px y duración menor a 300ms)
         if (diffX < 10 && diffY < 10 && touchDuration < 300) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleNextPhoto();
+        }
+      };
+
+      // Prevenir onClick en móvil ya que usamos touch events
+      const handleImageClick = (e) => {
+        if (!isMobile) {
           handleNextPhoto();
         }
       };
 
       const handleNextPhoto = () => {
+        const now = Date.now();
+        // Prevenir cambios muy rápidos (debounce de 300ms)
+        if (now - lastPhotoChangeTime.current < 300 || isChangingPhoto.current) {
+          return;
+        }
+        
+        isChangingPhoto.current = true;
+        lastPhotoChangeTime.current = now;
+        
         setShowMergedMessage(false);
         setCurrentPhotoIndex((prev) => (prev + 1) % randomOrder.length);
+        
+        // Reset flag después de la transición
+        setTimeout(() => {
+          isChangingPhoto.current = false;
+        }, 100);
       };
 
       // Detectar brillo de la imagen actual
@@ -490,7 +515,7 @@
                 }}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                onClick={handleNextPhoto}
+                onClick={handleImageClick}
               >
                 <img
                   src={currentPhoto.url}
