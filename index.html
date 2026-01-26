@@ -1,348 +1,371 @@
-import React, { useState, useEffect, useRef } from 'react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Silent Fragments</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    img {
+      pointer-events: none;
+      -webkit-user-drag: none;
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-const PhotoViewer = () => {
-  const projectTitle = "Silent Fragments";
-  const githubUser = "jpbgd";
-  const githubRepo = "Silent-fragments";
-  const githubBranch = "main";
+    const PhotoViewer = () => {
+      const projectTitle = "Silent Fragments";
+      const githubUser = "jpbgd";
+      const githubRepo = "Silent-fragments";
+      const githubBranch = "main";
 
-  const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showIntro, setShowIntro] = useState(true);
-  const [isZooming, setIsZooming] = useState(false);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [randomOrder, setRandomOrder] = useState([]);
-  const [showCommentBox, setShowCommentBox] = useState(false);
-  const [commentText, setCommentText] = useState('');
-  const [commentSubmitted, setCommentSubmitted] = useState(false);
-  const [dissolving, setDissolving] = useState(false);
-  const [dissolveText, setDissolveText] = useState('');
-  const [showMergedMessage, setShowMergedMessage] = useState(false);
-  const [imageBrightness, setImageBrightness] = useState('light');
-  
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-
-  useEffect(() => {
-    const photoFiles = [
-      'Untitled_250619.jpg',
-      'Untitled_241221.jpg',
-      'Untitiled_241208.jpg',
-      'Untitiled_241115.jpg',
-      'Untitiled_240714.jpg'
-    ];
-    
-    const photosList = photoFiles.map((fileName, index) => {
-      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-      const parts = nameWithoutExt.split('_');
-      const title = parts[0] || 'Untitled';
-      const date = parts[1] || '';
+      const [photos, setPhotos] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [showIntro, setShowIntro] = useState(true);
+      const [isZooming, setIsZooming] = useState(false);
+      const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+      const [randomOrder, setRandomOrder] = useState([]);
+      const [showCommentBox, setShowCommentBox] = useState(false);
+      const [commentText, setCommentText] = useState('');
+      const [commentSubmitted, setCommentSubmitted] = useState(false);
+      const [dissolving, setDissolving] = useState(false);
+      const [dissolveText, setDissolveText] = useState('');
+      const [showMergedMessage, setShowMergedMessage] = useState(false);
+      const [imageBrightness, setImageBrightness] = useState('light');
       
-      return {
-        id: index,
-        url: `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/${fileName}`,
-        title: title,
-        date: date
+      const touchStartX = useRef(0);
+      const touchStartY = useRef(0);
+
+      useEffect(() => {
+        const photoFiles = [
+          'Untitled_250619.jpg',
+          'Untitled_241221.jpg',
+          'Untitiled_241208.jpg',
+          'Untitiled_241115.jpg',
+          'Untitiled_240714.jpg'
+        ];
+        
+        const photosList = photoFiles.map((fileName, index) => {
+          const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+          const parts = nameWithoutExt.split('_');
+          const title = parts[0] || 'Untitled';
+          const date = parts[1] || '';
+          
+          return {
+            id: index,
+            url: `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/${fileName}`,
+            title: title,
+            date: date
+          };
+        });
+        
+        setPhotos(photosList);
+        setLoading(false);
+      }, []);
+
+      useEffect(() => {
+        if (photos.length > 0) {
+          const shuffled = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
+          setRandomOrder(shuffled);
+        }
+      }, [photos]);
+
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          setShowIntro(false);
+        }, 3000);
+        return () => clearTimeout(timer);
+      }, []);
+
+      const handleTouchStart = (e) => {
+        if (e.touches.length > 1) {
+          setIsZooming(true);
+          return;
+        }
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
       };
-    });
-    
-    setPhotos(photosList);
-    setLoading(false);
-  }, []);
 
-  useEffect(() => {
-    if (photos.length > 0) {
-      const shuffled = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
-      setRandomOrder(shuffled);
-    }
-  }, [photos]);
+      const handleTouchEnd = (e) => {
+        if (isZooming) {
+          setIsZooming(false);
+          return;
+        }
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const diffX = touchStartX.current - touchEndX;
+        const diffY = touchStartY.current - touchEndY;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowIntro(false);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
+        if (Math.abs(diffX) > 50 || Math.abs(diffY) > 50) {
+          handleNextPhoto();
+        }
+      };
 
-  const handleTouchStart = (e) => {
-    if (e.touches.length > 1) {
-      setIsZooming(true);
-      return;
-    }
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e) => {
-    if (isZooming) {
-      setIsZooming(false);
-      return;
-    }
-    
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const diffX = touchStartX.current - touchEndX;
-    const diffY = touchStartY.current - touchEndY;
-
-    if (Math.abs(diffX) > 50 || Math.abs(diffY) > 50) {
-      handleNextPhoto();
-    }
-  };
-
-  const handleNextPhoto = () => {
-    setCommentSubmitted(false);
-    setShowMergedMessage(false);
-    setCurrentPhotoIndex((prev) => (prev + 1) % randomOrder.length);
-  };
-
-  const handleTitleClick = (e) => {
-    e.stopPropagation();
-    setShowIntro(true);
-    setTimeout(() => {
-      setShowIntro(false);
-    }, 3000);
-  };
-
-  const handleSubmitComment = () => {
-    if (!commentText.trim()) return;
-
-    setDissolveText(commentText);
-    setDissolving(true);
-
-    const currentPhoto = photos[randomOrder[currentPhotoIndex]];
-    const comment = {
-      photoTitle: currentPhoto.title,
-      photoDate: currentPhoto.date,
-      text: commentText,
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log('Comment to save:', comment);
-
-    setTimeout(() => {
-      setDissolving(false);
-      setDissolveText('');
-      setCommentText('');
-      setShowMergedMessage(true);
-      
-      setTimeout(() => {
+      const handleNextPhoto = () => {
+        setCommentSubmitted(false);
         setShowMergedMessage(false);
-        setShowCommentBox(false);
-        setCommentSubmitted(true);
-      }, 2000);
-    }, 1800);
-  };
+        setCurrentPhotoIndex((prev) => (prev + 1) % randomOrder.length);
+      };
 
-  const analyzeImageBrightness = (imageUrl) => {
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.src = imageUrl;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      let brightness = 0;
-      
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        brightness += (r + g + b) / 3;
+      const handleTitleClick = (e) => {
+        e.stopPropagation();
+        setShowIntro(true);
+        setTimeout(() => {
+          setShowIntro(false);
+        }, 3000);
+      };
+
+      const handleSubmitComment = () => {
+        if (!commentText.trim()) return;
+
+        setDissolveText(commentText);
+        setDissolving(true);
+
+        const currentPhoto = photos[randomOrder[currentPhotoIndex]];
+        const comment = {
+          photoTitle: currentPhoto.title,
+          photoDate: currentPhoto.date,
+          text: commentText,
+          timestamp: new Date().toISOString()
+        };
+        
+        console.log('Comment to save:', comment);
+
+        setTimeout(() => {
+          setDissolving(false);
+          setDissolveText('');
+          setCommentText('');
+          setShowMergedMessage(true);
+          
+          setTimeout(() => {
+            setShowMergedMessage(false);
+            setShowCommentBox(false);
+            setCommentSubmitted(true);
+          }, 2000);
+        }, 1800);
+      };
+
+      const analyzeImageBrightness = (imageUrl) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = imageUrl;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          let brightness = 0;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            brightness += (r + g + b) / 3;
+          }
+          
+          brightness = brightness / (data.length / 4);
+          setImageBrightness(brightness > 127 ? 'light' : 'dark');
+        };
+      };
+
+      useEffect(() => {
+        if (showCommentBox && photos.length > 0 && randomOrder.length > 0) {
+          const current = photos[randomOrder[currentPhotoIndex]];
+          if (current) {
+            analyzeImageBrightness(current.url);
+          }
+        }
+      }, [showCommentBox, photos, randomOrder, currentPhotoIndex]);
+
+      if (loading) {
+        return (
+          <div className="w-screen h-screen bg-white flex items-center justify-center">
+            <p className="text-gray-900 text-sm">Loading...</p>
+          </div>
+        );
       }
-      
-      brightness = brightness / (data.length / 4);
-      setImageBrightness(brightness > 127 ? 'light' : 'dark');
-    };
-  };
 
-  useEffect(() => {
-    if (showCommentBox && photos.length > 0 && randomOrder.length > 0) {
-      const current = photos[randomOrder[currentPhotoIndex]];
-      if (current) {
-        analyzeImageBrightness(current.url);
+      if (photos.length === 0) {
+        return (
+          <div className="w-screen h-screen bg-white flex items-center justify-center">
+            <p className="text-gray-900 text-sm">No photos found</p>
+          </div>
+        );
       }
-    }
-  }, [showCommentBox, photos, randomOrder, currentPhotoIndex]);
 
-  if (loading) {
-    return (
-      <div className="w-screen h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-900 text-sm">Loading...</p>
-      </div>
-    );
-  }
+      const currentPhoto = photos[randomOrder[currentPhotoIndex]];
 
-  if (photos.length === 0) {
-    return (
-      <div className="w-screen h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-900 text-sm">No photos found</p>
-      </div>
-    );
-  }
-
-  const currentPhoto = photos[randomOrder[currentPhotoIndex]];
-
-  return (
-    <div className="w-screen h-screen bg-white overflow-hidden relative">
-      {/* Intro Screen */}
-      <div
-        className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
-          showIntro ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ 
-          transition: 'opacity 2000ms ease-out',
-          transitionDelay: showIntro ? '1000ms' : '0ms',
-          pointerEvents: showIntro ? 'auto' : 'none'
-        }}
-      >
-        <h1 className="text-gray-900 text-4xl font-light tracking-wider">
-          {projectTitle}
-        </h1>
-      </div>
-
-      {/* Main Viewer */}
-      {!showIntro && currentPhoto && (
-        <div
-          className="w-full h-full flex flex-col items-center justify-between p-6"
-        >
-          {/* Project Title (top) - clickable */}
-          <div className="w-full text-center cursor-pointer" onClick={handleTitleClick}>
-            <h2 className="text-gray-900 text-base font-light tracking-wide opacity-70">
-              {projectTitle}
-            </h2>
-          </div>
-
-          {/* Photo - clickable and zoomable */}
-          <div 
-            className="flex-1 flex items-center justify-center w-full max-w-2xl cursor-pointer" 
-            style={{ maxHeight: '70vh' }}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onClick={handleNextPhoto}
-          >
-            <img
-              src={currentPhoto.url}
-              alt={currentPhoto.title}
-              className="max-w-full max-h-full object-contain"
-              style={{ 
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.12)',
-                touchAction: 'pan-x pan-y pinch-zoom'
-              }}
-            />
-          </div>
-
-          {/* Share your thoughts centered and title/date right - smaller text */}
-          <div className="w-full flex justify-center items-center mb-4 px-3 relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCommentBox(true);
-              }}
-              className="text-gray-900 text-xs font-light opacity-70 hover:opacity-100 transition-opacity"
-            >
-              Share your thoughts
-            </button>
-            <p className="text-gray-900 text-xs font-light italic opacity-70 absolute right-3">
-              {currentPhoto.title}, {currentPhoto.date}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Comment Overlay */}
-      {showCommentBox && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            backdropFilter: 'blur(2px)',
-            WebkitBackdropFilter: 'blur(2px)'
-          }}
-          onClick={() => setShowCommentBox(false)}
-        >
-          <div className="w-11/12 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="relative h-32">
-              <div className="absolute inset-0 flex items-center justify-center">
-                {!showMergedMessage ? (
-                  <>
-                    {!commentText && (
-                      <span 
-                        className={`text-sm absolute pointer-events-none ${
-                          imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
-                        }`}
-                      >
-                        write down what you're thinking...
-                      </span>
-                    )}
-                    <textarea
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      className={`w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center ${
-                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}
-                      style={{ lineHeight: '128px' }}
-                      autoFocus
-                    />
-                  </>
-                ) : (
-                  <p className={`text-sm font-light ${
-                    imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
-                  }`}>
-                    Words merged with image work
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-center mt-4" style={{ height: '24px' }}>
-              {!showMergedMessage && (
-                <button
-                  onClick={handleSubmitComment}
-                  className={`opacity-70 hover:opacity-100 transition-opacity ${
-                    imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dissolving Text Effect */}
-      {dissolving && (
-        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-          <p
-            className="text-gray-900 text-lg transition-all duration-1000"
-            style={{
-              opacity: dissolving ? 0 : 1,
-              filter: dissolving ? 'blur(8px)' : 'blur(0px)',
-              transform: dissolving ? 'scale(1.1)' : 'scale(1)'
+      return (
+        <div className="w-screen h-screen bg-white overflow-hidden relative">
+          <div
+            className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
+              showIntro ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ 
+              transition: 'opacity 2000ms ease-out',
+              transitionDelay: showIntro ? '1000ms' : '0ms',
+              pointerEvents: showIntro ? 'auto' : 'none'
             }}
           >
-            {dissolveText}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
+            <h1 className="text-gray-900 text-4xl font-light tracking-wider">
+              {projectTitle}
+            </h1>
+          </div>
 
-export default PhotoViewer;
+          {!showIntro && currentPhoto && (
+            <div
+              className="w-full h-full flex flex-col items-center justify-between p-6"
+            >
+              <div className="w-full text-center cursor-pointer" onClick={handleTitleClick}>
+                <h2 className="text-gray-900 text-base font-light tracking-wide opacity-70">
+                  {projectTitle}
+                </h2>
+              </div>
+
+              <div 
+                className="flex-1 flex items-center justify-center w-full max-w-2xl cursor-pointer" 
+                style={{ maxHeight: '70vh' }}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onClick={handleNextPhoto}
+              >
+                <img
+                  src={currentPhoto.url}
+                  alt={currentPhoto.title}
+                  className="max-w-full max-h-full object-contain"
+                  style={{ 
+                    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.12)',
+                    touchAction: 'pan-x pan-y pinch-zoom'
+                  }}
+                />
+              </div>
+
+              <div className="w-full flex justify-center items-center mb-4 px-3 relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCommentBox(true);
+                  }}
+                  className="text-gray-900 text-xs font-light opacity-70 hover:opacity-100 transition-opacity"
+                >
+                  Share your thoughts
+                </button>
+                <p className="text-gray-900 text-xs font-light italic opacity-70 absolute right-3">
+                  {currentPhoto.title}, {currentPhoto.date}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {showCommentBox && (
+            <div
+              className="fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)'
+              }}
+              onClick={() => setShowCommentBox(false)}
+            >
+              <div className="w-11/12 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
+                <div className="relative h-32">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {!showMergedMessage ? (
+                      <>
+                        {!commentText && (
+                          <span 
+                            className={`text-sm absolute pointer-events-none ${
+                              imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
+                            }`}
+                          >
+                            write down what you're thinking...
+                          </span>
+                        )}
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          className={`w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center ${
+                            imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}
+                          style={{ lineHeight: '128px' }}
+                          autoFocus
+                        />
+                      </>
+                    ) : (
+                      <p className={`text-sm font-light ${
+                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-500'
+                      }`}>
+                        Words merged with image work
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4" style={{ height: '24px' }}>
+                  {!showMergedMessage && (
+                    <button
+                      onClick={handleSubmitComment}
+                      className={`opacity-70 hover:opacity-100 transition-opacity ${
+                        imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {dissolving && (
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+              <p
+                className="text-gray-900 text-lg transition-all duration-1000"
+                style={{
+                  opacity: dissolving ? 0 : 1,
+                  filter: dissolving ? 'blur(8px)' : 'blur(0px)',
+                  transform: dissolving ? 'scale(1.1)' : 'scale(1)'
+                }}
+              >
+                {dissolveText}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<PhotoViewer />);
+  </script>
+</body>
+</html>
