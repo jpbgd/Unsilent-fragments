@@ -65,6 +65,7 @@
       const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
       const [isHoveringClickable, setIsHoveringClickable] = useState(false);
       const [isMobile, setIsMobile] = useState(false);
+      const [isImageBright, setIsImageBright] = useState(false);
       
       // Contact sheet draggable positions
       const [imagePositions, setImagePositions] = useState([]);
@@ -235,6 +236,45 @@
         setShowMergedMessage(false);
         setCurrentPhotoIndex((prev) => (prev + 1) % randomOrder.length);
       };
+
+      // Detectar brillo de la imagen actual
+      useEffect(() => {
+        if (!currentPhoto) return;
+        
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = currentPhoto.url;
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Usar tamaño pequeño para análisis rápido
+          const size = 50;
+          canvas.width = size;
+          canvas.height = size;
+          
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          try {
+            const imageData = ctx.getImageData(0, 0, size, size);
+            const data = imageData.data;
+            let totalBrightness = 0;
+            
+            for (let i = 0; i < data.length; i += 4) {
+              // Calcular luminosidad percibida
+              const brightness = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+              totalBrightness += brightness;
+            }
+            
+            const avgBrightness = totalBrightness / (size * size);
+            setIsImageBright(avgBrightness > 140); // Si es mayor a 140, es brillante
+          } catch (e) {
+            // Si falla el análisis (CORS), asumir imagen oscura
+            setIsImageBright(false);
+          }
+        };
+      }, [currentPhoto]);
 
       const handleTitleClick = (e) => {
         e.stopPropagation();
@@ -471,37 +511,43 @@
                   paddingTop: isMobile ? '8px' : '12px'
                 }}
               >
-                <div className="flex justify-between items-center w-full">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowContactSheet(true);
-                    }}
-                    className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0"
-                  >
-                    <svg width={isMobile ? "16" : "16"} height={isMobile ? "16" : "16"} viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="7" cy="7" r="2.5"/>
-                      <circle cx="17" cy="7" r="2.5"/>
-                      <circle cx="7" cy="17" r="2.5"/>
-                      <circle cx="17" cy="17" r="2.5"/>
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCommentBox(true);
-                    }}
-                    className="text-gray-900 font-light opacity-70 hover:opacity-100 transition-opacity"
-                    style={{ fontSize: isMobile ? '11px' : '12px' }}
-                  >
-                    Share your thoughts
-                  </button>
-                  <p 
-                    className="text-gray-900 font-light italic opacity-70 flex-shrink-0"
-                    style={{ fontSize: isMobile ? '11px' : '12px' }}
-                  >
-                    {currentPhoto.title}, {currentPhoto.date}
-                  </p>
+                <div className="flex items-center w-full">
+                  <div className="flex-1 flex justify-start">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowContactSheet(true);
+                      }}
+                      className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"
+                    >
+                      <svg width={isMobile ? "16" : "16"} height={isMobile ? "16" : "16"} viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="7" cy="7" r="2.5"/>
+                        <circle cx="17" cy="7" r="2.5"/>
+                        <circle cx="7" cy="17" r="2.5"/>
+                        <circle cx="17" cy="17" r="2.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCommentBox(true);
+                      }}
+                      className="text-gray-900 font-light opacity-70 hover:opacity-100 transition-opacity"
+                      style={{ fontSize: isMobile ? '11px' : '12px' }}
+                    >
+                      Share your thoughts
+                    </button>
+                  </div>
+                  <div className="flex-1 flex justify-end">
+                    <p 
+                      className="text-gray-900 font-light italic opacity-70"
+                      style={{ fontSize: isMobile ? '11px' : '12px' }}
+                    >
+                      {currentPhoto.title}, {currentPhoto.date}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -511,9 +557,9 @@
             <div
               className="fixed inset-0 flex items-center justify-center z-50"
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(2px)',
-                WebkitBackdropFilter: 'blur(2px)'
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                backdropFilter: 'blur(0.5px)',
+                WebkitBackdropFilter: 'blur(0.5px)'
               }}
               onClick={() => setShowCommentBox(false)}
             >
@@ -523,20 +569,36 @@
                     {!showMergedMessage ? (
                       <>
                         {!commentText && (
-                          <span className="text-gray-500 text-sm absolute pointer-events-none">
+                          <span 
+                            className="text-sm absolute pointer-events-none font-light"
+                            style={{ 
+                              color: isImageBright ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.85)',
+                              textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
+                            }}
+                          >
                             write down what you're thinking...
                           </span>
                         )}
                         <textarea
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
-                          className="w-full h-full bg-transparent border-none outline-none resize-none text-gray-900 text-sm text-center"
-                          style={{ lineHeight: '128px', cursor: isMobile ? 'auto' : 'none' }}
+                          className="w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center font-light"
+                          style={{ 
+                            lineHeight: '128px', 
+                            cursor: isMobile ? 'auto' : 'none',
+                            color: isImageBright ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
+                            textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
+                          }}
                           autoFocus
                         />
                       </>
                     ) : (
-                      <p className="text-gray-500 text-sm font-light">
+                      <p 
+                        className="text-sm font-light"
+                        style={{ 
+                          color: isImageBright ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.85)'
+                        }}
+                      >
                         Words merged with image work
                       </p>
                     )}
@@ -544,7 +606,13 @@
                 </div>
                 <div className="flex justify-center mt-4" style={{ height: '24px' }}>
                   {!showMergedMessage && (
-                    <button onClick={handleSubmitComment} className="text-gray-900 opacity-70 hover:opacity-100">
+                    <button 
+                      onClick={handleSubmitComment} 
+                      className="opacity-70 hover:opacity-100"
+                      style={{ 
+                        color: isImageBright ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.9)'
+                      }}
+                    >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
                       </svg>
