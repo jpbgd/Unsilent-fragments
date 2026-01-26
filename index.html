@@ -14,10 +14,14 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      cursor: none;
     }
     img {
       pointer-events: none;
       -webkit-user-drag: none;
+    }
+    * {
+      cursor: none !important;
     }
   </style>
 </head>
@@ -46,6 +50,9 @@
       const [showMergedMessage, setShowMergedMessage] = useState(false);
       const [imageBrightness, setImageBrightness] = useState('light');
       const [showContactSheet, setShowContactSheet] = useState(false);
+      const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
+      const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+      const [isHoveringClickable, setIsHoveringClickable] = useState(false);
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
@@ -89,6 +96,15 @@
           setShowIntro(false);
         }, 1500);
         return () => clearTimeout(timer);
+      }, []);
+
+      useEffect(() => {
+        const handleMouseMove = (e) => {
+          setCursorPosition({ x: e.clientX, y: e.clientY });
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
       const handleTouchStart = (e) => {
@@ -220,7 +236,21 @@
       const currentPhoto = photos[randomOrder[currentPhotoIndex]];
 
       return (
-        <div className="w-screen h-screen bg-white overflow-hidden relative">
+        <div className="w-screen h-screen bg-white overflow-hidden relative" style={{ cursor: 'none' }}>
+          <div
+            className="fixed pointer-events-none z-[9999] transition-all duration-150"
+            style={{
+              left: `${cursorPosition.x}px`,
+              top: `${cursorPosition.y}px`,
+              transform: 'translate(-50%, -50%)',
+              width: '20px',
+              height: '20px',
+              border: '1px solid rgba(0, 0, 0, 0.4)',
+              backgroundColor: isHoveringClickable ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
+              borderRadius: '50%'
+            }}
+          />
+
           <div
             className={`absolute inset-0 bg-white flex items-center justify-center z-50 ${
               showIntro ? 'opacity-100' : 'opacity-0'
@@ -237,7 +267,7 @@
 
           {!showIntro && currentPhoto && (
             <div className="w-full h-full flex flex-col items-center justify-between p-6">
-              <div className="w-full text-center cursor-pointer" onClick={handleTitleClick}>
+              <div className="w-full text-center cursor-pointer" onClick={handleTitleClick} onMouseEnter={() => setIsHoveringClickable(true)} onMouseLeave={() => setIsHoveringClickable(false)}>
                 <h2 className="text-gray-900 text-base font-light tracking-wide opacity-70">
                   {projectTitle}
                 </h2>
@@ -249,6 +279,8 @@
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 onClick={handleNextPhoto}
+                onMouseEnter={() => setIsHoveringClickable(true)}
+                onMouseLeave={() => setIsHoveringClickable(false)}
               >
                 <img
                   src={currentPhoto.url}
@@ -267,6 +299,8 @@
                     e.stopPropagation();
                     setShowContactSheet(true);
                   }}
+                  onMouseEnter={() => setIsHoveringClickable(true)}
+                  onMouseLeave={() => setIsHoveringClickable(false)}
                   className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -281,6 +315,8 @@
                     e.stopPropagation();
                     setShowCommentBox(true);
                   }}
+                  onMouseEnter={() => setIsHoveringClickable(true)}
+                  onMouseLeave={() => setIsHoveringClickable(false)}
                   className="text-gray-900 text-xs font-light opacity-70 hover:opacity-100 transition-opacity absolute left-1/2 transform -translate-x-1/2"
                 >
                   Share your thoughts
@@ -339,6 +375,8 @@
                   {!showMergedMessage && (
                     <button
                       onClick={handleSubmitComment}
+                      onMouseEnter={() => setIsHoveringClickable(true)}
+                      onMouseLeave={() => setIsHoveringClickable(false)}
                       className={`opacity-70 hover:opacity-100 transition-opacity ${
                         imageBrightness === 'dark' ? 'text-white' : 'text-gray-900'
                       }`}
@@ -393,15 +431,29 @@
                     { top: '60%', left: '40%', width: '38%' }
                   ];
                   const pos = positions[index % positions.length];
+                  const isHovered = hoveredThumbnail === index;
+                  const isOtherHovered = hoveredThumbnail !== null && hoveredThumbnail !== index;
                   
                   return (
                     <div
                       key={photo.id}
-                      className="absolute cursor-pointer hover:opacity-70 transition-opacity"
-                      style={pos}
+                      className="absolute cursor-pointer transition-all duration-300"
+                      style={{
+                        ...pos,
+                        filter: isOtherHovered ? 'blur(4px)' : 'blur(0px)',
+                        opacity: isOtherHovered ? 0.3 : 1
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleThumbnailClick(index);
+                      }}
+                      onMouseEnter={() => {
+                        setHoveredThumbnail(index);
+                        setIsHoveringClickable(true);
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredThumbnail(null);
+                        setIsHoveringClickable(false);
                       }}
                     >
                       <img
