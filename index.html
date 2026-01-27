@@ -64,6 +64,7 @@
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
       const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
       const [isHoveringClickable, setIsHoveringClickable] = useState(false);
+      const [hoveredElement, setHoveredElement] = useState(null);
       const [isMobile, setIsMobile] = useState(false);
       const [isImageBright, setIsImageBright] = useState(false);
       
@@ -75,6 +76,11 @@
       const longPressTimer = useRef(null);
       const [isLongPress, setIsLongPress] = useState(false);
       const wasDragging = useRef(false);
+      
+      // Pinch zoom for contact sheet
+      const [pinchingIndex, setPinchingIndex] = useState(null);
+      const initialPinchDistance = useRef(0);
+      const initialImageWidth = useRef(0);
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
@@ -341,9 +347,30 @@
 
       // Mobile touch drag handlers for contact sheet
       const handleImageTouchStart = (e, index) => {
+        // Si hay 2 dedos, es pinch zoom
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+          );
+          initialPinchDistance.current = distance;
+          initialImageWidth.current = imagePositions[index]?.width || 100;
+          setPinchingIndex(index);
+          
+          // Bring to front
+          setZIndexOrder(prev => {
+            const newOrder = prev.filter(i => i !== index);
+            return [...newOrder, index];
+          });
+          return;
+        }
+        
         const touch = e.touches[0];
         
-        // Start long press timer
+        // Start long press timer - reducido a 150ms para que sea más natural
         longPressTimer.current = setTimeout(() => {
           setIsLongPress(true);
           wasDragging.current = true;
@@ -358,10 +385,32 @@
             const newOrder = prev.filter(i => i !== index);
             return [...newOrder, index];
           });
-        }, 300); // 300ms long press
+        }, 150); // Reducido de 300ms a 150ms
       };
 
       const handleImageTouchMove = (e, index) => {
+        // Handle pinch zoom
+        if (e.touches.length === 2 && pinchingIndex === index) {
+          e.preventDefault();
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+          );
+          
+          const scale = distance / initialPinchDistance.current;
+          const newWidth = Math.max(80, Math.min(window.innerWidth * 0.8, initialImageWidth.current * scale));
+          
+          const newPositions = [...imagePositions];
+          newPositions[index] = {
+            ...newPositions[index],
+            width: newWidth
+          };
+          setImagePositions(newPositions);
+          return;
+        }
+        
         if (draggingIndex === index) {
           e.preventDefault();
           const touch = e.touches[0];
@@ -383,6 +432,14 @@
       const handleImageTouchEnd = (e, index) => {
         if (longPressTimer.current) {
           clearTimeout(longPressTimer.current);
+        }
+        
+        // Reset pinch zoom
+        if (pinchingIndex === index) {
+          setPinchingIndex(null);
+          initialPinchDistance.current = 0;
+          initialImageWidth.current = 0;
+          return;
         }
         
         if (draggingIndex === index) {
@@ -411,17 +468,19 @@
           timestamp: new Date().toISOString()
         });
 
+        // Difuminar durante 3 segundos
         setTimeout(() => {
           setDissolving(false);
           setDissolveText('');
           setCommentText('');
           setShowMergedMessage(true);
           
+          // Mostrar mensaje durante 3 segundos y luego cerrar
           setTimeout(() => {
             setShowMergedMessage(false);
             setShowCommentBox(false);
-          }, 2000);
-        }, 1800);
+          }, 3000);
+        }, 3000);
       };
 
       if (loading) {
@@ -498,8 +557,16 @@
                 overflow: 'hidden'
               }}
             >
-              <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}>
-                <h2 className="text-gray-900 text-sm md:text-base font-light tracking-wide opacity-70">
+              <div 
+                className="w-full text-center cursor-pointer flex-shrink-0" 
+                onClick={handleTitleClick}
+                onMouseEnter={() => setHoveredElement('title')}
+                onMouseLeave={() => setHoveredElement(null)}
+              >
+                <h2 
+                  className="text-sm md:text-base font-light tracking-wide opacity-70 transition-all"
+                  style={{ color: hoveredElement === 'title' ? '#0F4C81' : '#111827' }}
+                >
                   {projectTitle}
                 </h2>
               </div>
@@ -543,7 +610,10 @@
                         e.stopPropagation();
                         setShowContactSheet(true);
                       }}
-                      className="text-gray-900 opacity-70 hover:opacity-100 transition-opacity"
+                      onMouseEnter={() => setHoveredElement('contactSheet')}
+                      onMouseLeave={() => setHoveredElement(null)}
+                      className="opacity-70 hover:opacity-100 transition-all"
+                      style={{ color: hoveredElement === 'contactSheet' ? '#0F4C81' : '#111827' }}
                     >
                       <svg width={isMobile ? "16" : "16"} height={isMobile ? "16" : "16"} viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="7" cy="7" r="2.5"/>
@@ -559,8 +629,13 @@
                         e.stopPropagation();
                         setShowCommentBox(true);
                       }}
-                      className="text-gray-900 font-light opacity-70 hover:opacity-100 transition-opacity"
-                      style={{ fontSize: isMobile ? '11px' : '12px' }}
+                      onMouseEnter={() => setHoveredElement('share')}
+                      onMouseLeave={() => setHoveredElement(null)}
+                      className="font-light opacity-70 hover:opacity-100 transition-all"
+                      style={{ 
+                        fontSize: isMobile ? '11px' : '12px',
+                        color: hoveredElement === 'share' ? '#0F4C81' : '#111827'
+                      }}
                     >
                       Share your thoughts
                     </button>
@@ -584,11 +659,27 @@
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.02)',
                 backdropFilter: 'blur(0.5px)',
-                WebkitBackdropFilter: 'blur(0.5px)'
+                WebkitBackdropFilter: 'blur(0.5px)',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: '100%',
+                width: '100%'
               }}
               onClick={() => setShowCommentBox(false)}
             >
-              <div className="w-11/12 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
+              <div 
+                className="w-11/12 max-w-md text-center" 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              >
                 <div className="relative h-32">
                   <div className="absolute inset-0 flex items-center justify-center">
                     {!showMergedMessage ? (
@@ -688,10 +779,14 @@
               
               {/* Hint text */}
               <p 
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-400 text-xs font-light z-[60]"
-                style={{ pointerEvents: 'none' }}
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-900 font-light italic z-[60]"
+                style={{ 
+                  pointerEvents: 'none',
+                  fontSize: isMobile ? '11px' : '12px',
+                  opacity: 0.7
+                }}
               >
-                {isMobile ? 'hold & drag to move • tap to view' : 'click & drag to move • click to view'}
+                {isMobile ? 'Hold & drag to reorder freely' : 'Click and drag to reorder freely'}
               </p>
 
               <div className="w-full h-full relative">
