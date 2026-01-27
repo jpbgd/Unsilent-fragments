@@ -89,6 +89,8 @@
       const [pinchingIndex, setPinchingIndex] = useState(null);
       const initialPinchDistance = useRef(0);
       const initialImageWidth = useRef(0);
+      const initialPinchCenter = useRef({ x: 0, y: 0 });
+      const initialImagePos = useRef({ x: 0, y: 0 });
       
       const touchStartX = useRef(0);
       const touchStartY = useRef(0);
@@ -370,8 +372,16 @@
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
           );
+          const centerX = (touch1.clientX + touch2.clientX) / 2;
+          const centerY = (touch1.clientY + touch2.clientY) / 2;
+          
           initialPinchDistance.current = distance;
           initialImageWidth.current = imagePositions[index]?.width || 100;
+          initialPinchCenter.current = { x: centerX, y: centerY };
+          initialImagePos.current = { 
+            x: imagePositions[index]?.x || 0, 
+            y: imagePositions[index]?.y || 0 
+          };
           setPinchingIndex(index);
           setDraggingIndex(null);
           setIsLongPress(false);
@@ -405,7 +415,7 @@
       };
 
       const handleImageTouchMove = (e, index) => {
-        // Si se detectan 2 dedos durante el move, iniciar pinch zoom
+        // Si se detectan 2 dedos durante el move, manejar pinch zoom + drag
         if (e.touches.length === 2) {
           e.preventDefault();
           e.stopPropagation();
@@ -423,11 +433,18 @@
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
           );
+          const centerX = (touch1.clientX + touch2.clientX) / 2;
+          const centerY = (touch1.clientY + touch2.clientY) / 2;
           
           // Si es el inicio del pinch, guardar distancia inicial
           if (pinchingIndex !== index) {
             initialPinchDistance.current = distance;
             initialImageWidth.current = imagePositions[index]?.width || 100;
+            initialPinchCenter.current = { x: centerX, y: centerY };
+            initialImagePos.current = { 
+              x: imagePositions[index]?.x || 0, 
+              y: imagePositions[index]?.y || 0 
+            };
             setPinchingIndex(index);
             
             // Bring to front
@@ -436,14 +453,20 @@
               return [...newOrder, index];
             });
           } else {
-            // Continuar el pinch zoom
+            // Continuar el pinch zoom + movimiento
             const scale = distance / initialPinchDistance.current;
             const newWidth = Math.max(60, Math.min(window.innerWidth * 0.9, initialImageWidth.current * scale));
+            
+            // Calcular el movimiento del centro del pinch
+            const deltaX = centerX - initialPinchCenter.current.x;
+            const deltaY = centerY - initialPinchCenter.current.y;
             
             const newPositions = [...imagePositions];
             newPositions[index] = {
               ...newPositions[index],
-              width: newWidth
+              width: newWidth,
+              x: initialImagePos.current.x + deltaX,
+              y: initialImagePos.current.y + deltaY
             };
             setImagePositions(newPositions);
           }
@@ -479,6 +502,8 @@
           setPinchingIndex(null);
           initialPinchDistance.current = 0;
           initialImageWidth.current = 0;
+          initialPinchCenter.current = { x: 0, y: 0 };
+          initialImagePos.current = { x: 0, y: 0 };
           e.preventDefault();
           e.stopPropagation();
           return;
@@ -517,7 +542,7 @@
           setDissolveOpacity(0);
         });
 
-        // Después de 3 segundos de fade, mostrar mensaje
+        // Después de 4 segundos de fade, mostrar mensaje inmediatamente
         setTimeout(() => {
           setDissolving(false);
           setDissolveText('');
@@ -528,7 +553,7 @@
             setShowMergedMessage(false);
             setShowCommentBox(false);
           }, 3000);
-        }, 3000);
+        }, 4000);
       };
 
       if (loading) {
@@ -616,7 +641,7 @@
                   className="text-sm md:text-base font-light tracking-wide transition-all"
                   style={{ 
                     color: hoveredElement === 'title' ? '#0f4c81' : '#111827',
-                    opacity: 0.7
+                    opacity: hoveredElement === 'title' ? 1 : 0.7
                   }}
                 >
                   {projectTitle}
@@ -772,9 +797,9 @@
                           color: isImageBright ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.95)',
                           textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
                           opacity: dissolveOpacity,
-                          filter: `blur(${(1 - dissolveOpacity) * 8}px)`,
-                          transform: `scale(${1 + (1 - dissolveOpacity) * 0.1})`,
-                          transition: 'opacity 3s ease-out, filter 3s ease-out, transform 3s ease-out'
+                          filter: `blur(${(1 - dissolveOpacity) * 10}px)`,
+                          transform: `scale(${1 + (1 - dissolveOpacity) * 0.15})`,
+                          transition: 'opacity 4s ease-out, filter 4s ease-out, transform 4s ease-out'
                         }}
                       >
                         {dissolveText}
