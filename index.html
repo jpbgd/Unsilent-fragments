@@ -3,615 +3,587 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
   <title>Silent Fragments</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --classic-blue: #0f4c81; }
     html, body {
-      width: 100%; height: 100%; overflow: hidden;
-      background: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-user-select: none; user-select: none;
+      margin: 0; padding: 0; overflow: hidden; position: fixed;
+      width: 100%; height: 100%; background: white;
+      -webkit-user-select: none; -moz-user-select: none; user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-
-```
-#intro {
-  position: fixed; inset: 0; background: #fff;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 100; transition: opacity 2s ease-out;
-}
-#intro.fade { opacity: 0; pointer-events: none; }
-#intro h1 { font-size: 24px; font-weight: 300; color: #111; letter-spacing: 2px; }
-
-#app {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  padding: 12px; padding-top: max(12px, env(safe-area-inset-top));
-}
-
-#header {
-  text-align: center; padding: 8px 0;
-}
-#header h2 {
-  font-size: 15px; font-weight: 300; color: #111; opacity: 0.7;
-  letter-spacing: 1px;
-}
-
-#photoArea {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  min-height: 0; padding: 8px 0;
-}
-#photo {
-  max-width: 100%; max-height: 100%; object-fit: contain;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-}
-
-#footer {
-  display: flex; align-items: center; padding: 8px 0;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-}
-#footer > div { flex: 1; }
-#footer .left { text-align: left; }
-#footer .center { text-align: center; }
-#footer .right { text-align: right; }
-
-#footer button {
-  background: none; border: none; font-family: inherit;
-  font-size: 13px; font-weight: 300; color: #111; opacity: 0.7;
-  padding: 8px; cursor: pointer;
-}
-#footer .date { font-style: italic; }
-#footer svg { vertical-align: middle; }
-
-#commentModal {
-  position: fixed; inset: 0; z-index: 50;
-  display: none; align-items: center; justify-content: center;
-}
-#commentModal.show { display: flex; }
-
-#commentBox {
-  width: 90%; max-width: 400px; text-align: center; padding: 20px;
-}
-#commentInput {
-  width: 100%; height: 80px; background: transparent; border: none;
-  font-family: inherit; font-size: 16px; font-weight: 300;
-  text-align: center; color: rgba(255,255,255,0.9); resize: none;
-  outline: none; line-height: 1.5;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-#commentInput::placeholder {
-  color: rgba(255,255,255,0.7);
-}
-#dissolveMsg {
-  font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.9);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  transition: opacity 3.5s, filter 3.5s;
-  line-height: 1.5;
-}
-#mergedMsg {
-  font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.8);
-}
-#submitBtn {
-  background: none; border: none; padding: 12px; margin-top: 10px;
-  color: rgba(255,255,255,0.9); cursor: pointer;
-}
-.hidden { display: none !important; }
-
-#contactSheet {
-  position: fixed; inset: 0; background: #fff; z-index: 50;
-  display: none;
-}
-#contactSheet.show { display: block; }
-#contactClose {
-  position: absolute; top: 16px; right: 16px; z-index: 60;
-  background: none; border: none; color: #111; opacity: 0.5;
-  cursor: pointer; padding: 8px;
-}
-#contactHint {
-  position: absolute; left: 50%; bottom: 12px;
-  transform: translateX(-50%);
-  font-size: 13px; font-weight: 300; color: #111; opacity: 0.7;
-  z-index: 60;
-}
-.contactImg {
-  position: absolute;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  transition: filter 0.3s, opacity 0.3s, transform 0.1s;
-}
-.contactImg.dragging {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-  transform: scale(1.03);
-}
-.contactImg.faded { filter: blur(4px); opacity: 0.3; }
-
-#commentsView {
-  position: fixed; inset: 0; background: #fff; z-index: 50;
-  display: none; overflow: auto; padding: 24px;
-}
-#commentsView.show { display: block; }
-#commentsViewClose {
-  position: absolute; top: 24px; right: 24px;
-  background: none; border: none; color: #111; opacity: 0.5;
-  cursor: pointer; padding: 8px;
-}
-#commentsText {
-  font-size: 10px; line-height: 1.8; color: #111; opacity: 0.7;
-  font-weight: 300;
-}
-
-#idleVideo {
-  position: fixed; z-index: 200; display: none;
-  width: 60%; max-height: 70%; object-fit: contain;
-  transform: translate(-50%, -50%);
-}
-#idleVideo.show { display: block; }
-
-@media (min-width: 769px) {
-  #app { padding: 24px; }
-  #header h2 { font-size: 16px; }
-  #footer button { font-size: 14px; }
-  #photo { max-width: 42rem; }
-}
-```
-
+    body { cursor: none; }
+    * { cursor: none !important; box-sizing: border-box; }
+    img { pointer-events: none; -webkit-user-drag: none; }
+    input, textarea { font-size: 16px !important; font-family: inherit; }
+    #root:empty { display: none; }
+    #root { opacity: 0; animation: fadeIn 0.3s ease-in 0.1s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    @media (max-width: 768px) {
+      body { cursor: auto; }
+      * { cursor: auto !important; }
+    }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
 
-<div id="intro"><h1>Silent Fragments</h1></div>
+```
+const PhotoViewer = () => {
+  const projectTitle = "Silent Fragments";
+  const githubUser = "jpbgd";
+  const githubRepo = "Silent-fragments";
+  const githubBranch = "main";
+  const STORAGE_KEY = 'silentFragmentsComments';
+  const MAX_COMMENTS = 500;
 
-<div id="app">
-  <div id="header"><h2>Silent Fragments</h2></div>
-  <div id="photoArea"><img id="photo" src="" alt=""></div>
-  <div id="footer">
-    <div class="left">
-      <button id="gridBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="7" cy="7" r="3"></circle><circle cx="17" cy="7" r="3"></circle>
-          <circle cx="7" cy="17" r="3"></circle><circle cx="17" cy="17" r="3"></circle>
-        </svg>
-      </button>
-    </div>
-    <div class="center">
-      <button id="shareBtn">Share your thoughts</button>
-    </div>
-    <div class="right">
-      <button id="dateBtn" class="date"></button>
-    </div>
-  </div>
-</div>
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [randomOrder, setRandomOrder] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isImageBright, setIsImageBright] = useState(false);
 
-<div id="commentModal">
-  <div id="commentBox">
-    <div id="inputArea">
-      <textarea id="commentInput" placeholder="write down what you're thinking..." 
-        data-gramm="false" spellcheck="false" autocomplete="off"></textarea>
-    </div>
-    <div id="dissolveArea" class="hidden">
-      <p id="dissolveMsg"></p>
-    </div>
-    <div id="mergedArea" class="hidden">
-      <p id="mergedMsg">Words merged with image work</p>
-    </div>
-    <div id="submitArea">
-      <button id="submitBtn">
-        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
+  const [showCommentBox, setShowCommentBox] = useState(false);
+  const [showContactSheet, setShowContactSheet] = useState(false);
+  const [showCommentsView, setShowCommentsView] = useState(false);
+  const [hoveredElement, setHoveredElement] = useState(null);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
-<div id="contactSheet">
-  <button id="contactClose">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  </button>
-  <p id="contactHint">Reorder freely</p>
-  <div id="contactArea"></div>
-</div>
+  const [commentText, setCommentText] = useState('');
+  const [dissolving, setDissolving] = useState(false);
+  const [dissolveText, setDissolveText] = useState('');
+  const [dissolveOpacity, setDissolveOpacity] = useState(1);
+  const [showMergedMessage, setShowMergedMessage] = useState(false);
+  const [photoComments, setPhotoComments] = useState({});
 
-<div id="commentsView">
-  <button id="commentsViewClose">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  </button>
-  <div id="commentsText"></div>
-</div>
+  const [imagePositions, setImagePositions] = useState([]);
+  const [draggingIndex, setDraggingIndex] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [zIndexOrder, setZIndexOrder] = useState([]);
+  const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
+  const [pinchingIndex, setPinchingIndex] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(null);
 
-<video id="idleVideo" autoplay loop muted playsinline></video>
+  const [showIdleScreen, setShowIdleScreen] = useState(false);
+  const [idlePosition, setIdlePosition] = useState({ x: 50, y: 50 });
 
-<script>
-(function() {
-  var photos = [
-    { id: 0, file: 'Untitled_250619.jpg', date: '250619' },
-    { id: 1, file: 'Untitled_241221.jpg', date: '241221' },
-    { id: 2, file: 'Untitiled_241208.jpg', date: '241208' },
-    { id: 3, file: 'Untitiled_241115.jpg', date: '241115' },
-    { id: 4, file: 'Untitiled_240714.jpg', date: '240714' }
+  const longPressTimer = useRef(null);
+  const isLongPress = useRef(false);
+  const wasDragging = useRef(false);
+  const initialPinchDistance = useRef(0);
+  const initialImageWidth = useRef(0);
+  const initialPinchCenter = useRef({ x: 0, y: 0 });
+  const initialImagePos = useRef({ x: 0, y: 0 });
+  const lastClickTime = useRef(0);
+  const idleTimer = useRef(null);
+
+  const photoFiles = [
+    'Untitled_250619.jpg', 'Untitled_241221.jpg', 'Untitiled_241208.jpg',
+    'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
   ];
-  
-  var baseUrl = 'https://raw.githubusercontent.com/jpbgd/Silent-fragments/main/';
-  var order = shuffle([0,1,2,3,4]);
-  var idx = 0;
-  var comments = loadComments();
-  var idleTimer = null;
-  
-  // Elements
-  var intro = document.getElementById('intro');
-  var photo = document.getElementById('photo');
-  var dateBtn = document.getElementById('dateBtn');
-  var commentModal = document.getElementById('commentModal');
-  var commentInput = document.getElementById('commentInput');
-  var inputArea = document.getElementById('inputArea');
-  var dissolveArea = document.getElementById('dissolveArea');
-  var dissolveMsg = document.getElementById('dissolveMsg');
-  var mergedArea = document.getElementById('mergedArea');
-  var submitArea = document.getElementById('submitArea');
-  var contactSheet = document.getElementById('contactSheet');
-  var contactArea = document.getElementById('contactArea');
-  var commentsView = document.getElementById('commentsView');
-  var commentsText = document.getElementById('commentsText');
-  var idleVideo = document.getElementById('idleVideo');
-  
-  // Contact sheet state
-  var positions = [];
-  var zOrder = [];
-  var dragging = null;
-  var dragOff = {x:0, y:0};
-  var longPress = null;
-  var isPress = false;
-  var activeImg = null;
-  
-  function shuffle(a) {
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
-  
-  function loadComments() {
-    try { return JSON.parse(localStorage.getItem('sfComments')) || {}; }
-    catch(e) { return {}; }
-  }
-  
-  function saveComments() {
-    try { localStorage.setItem('sfComments', JSON.stringify(comments)); }
-    catch(e) {}
-  }
-  
-  function showPhoto() {
-    var p = photos[order[idx]];
-    photo.src = baseUrl + p.file;
-    dateBtn.textContent = p.date;
-  }
-  
-  function nextPhoto() {
-    idx = (idx + 1) % order.length;
-    showPhoto();
-  }
-  
-  function resetIdle() {
-    idleVideo.classList.remove('show');
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function() {
-      idleVideo.style.left = (Math.random() * 50 + 25) + '%';
-      idleVideo.style.top = (Math.random() * 50 + 25) + '%';
-      idleVideo.classList.add('show');
-      idleVideo.play();
-    }, 10000);
-  }
-  
-  // Init
-  showPhoto();
-  idleVideo.src = baseUrl + 'Paramo.mp4';
-  
-  setTimeout(function() {
-    intro.classList.add('fade');
-  }, 2200);
-  
-  // Events
-  document.getElementById('photoArea').onclick = nextPhoto;
-  
-  document.getElementById('header').onclick = function() {
-    intro.classList.remove('fade');
-    setTimeout(function() { intro.classList.add('fade'); }, 3000);
-  };
-  
-  document.getElementById('gridBtn').onclick = function(e) {
-    e.stopPropagation();
-    openContact();
-  };
-  
-  document.getElementById('shareBtn').onclick = function(e) {
-    e.stopPropagation();
-    openComment();
-  };
-  
-  dateBtn.onclick = function(e) {
-    e.stopPropagation();
-    openComments();
-  };
-  
-  commentModal.onclick = function(e) {
-    if (e.target === commentModal) closeComment();
-  };
-  
-  document.getElementById('submitBtn').onclick = submitComment;
-  
-  document.getElementById('contactClose').onclick = function(e) {
-    e.stopPropagation();
-    closeContact();
-  };
-  
-  contactSheet.onclick = function(e) {
-    if (e.target === contactSheet || e.target === contactArea) closeContact();
-  };
-  
-  document.getElementById('commentsViewClose').onclick = closeComments;
-  commentsView.onclick = closeComments;
-  
-  ['mousedown','mousemove','keydown','touchstart','click'].forEach(function(ev) {
-    window.addEventListener(ev, resetIdle);
-  });
-  
-  resetIdle();
-  
-  // Comment functions
-  function openComment() {
-    commentModal.classList.add('show');
-    inputArea.classList.remove('hidden');
-    dissolveArea.classList.add('hidden');
-    mergedArea.classList.add('hidden');
-    submitArea.classList.remove('hidden');
-    commentInput.value = '';
-    commentInput.focus();
-  }
-  
-  function closeComment() {
-    commentModal.classList.remove('show');
-  }
-  
-  function submitComment() {
-    var text = commentInput.value.trim();
-    if (!text) return;
-    
-    var pid = photos[order[idx]].id;
-    if (!comments[pid]) comments[pid] = [];
-    if (comments[pid].length >= 500) comments[pid].shift();
-    comments[pid].push(text);
-    saveComments();
-    
-    inputArea.classList.add('hidden');
-    submitArea.classList.add('hidden');
-    
-    dissolveMsg.textContent = text;
-    dissolveMsg.style.opacity = '1';
-    dissolveMsg.style.filter = 'blur(0)';
-    dissolveArea.classList.remove('hidden');
-    
-    setTimeout(function() {
-      dissolveMsg.style.opacity = '0';
-      dissolveMsg.style.filter = 'blur(10px)';
-    }, 50);
-    
-    setTimeout(function() {
-      dissolveArea.classList.add('hidden');
-      mergedArea.classList.remove('hidden');
-      setTimeout(closeComment, 1800);
-    }, 3500);
-  }
-  
-  // Contact functions
-  function openContact() {
-    contactSheet.classList.add('show');
-    buildContact();
-  }
-  
-  function closeContact() {
-    contactSheet.classList.remove('show');
-  }
-  
-  function buildContact() {
-    contactArea.innerHTML = '';
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-    var isMobile = w <= 768;
-    
-    zOrder = shuffle([0,1,2,3,4]);
-    
-    var zones = isMobile ? [
-      {x:0.15,y:0.12},{x:0.60,y:0.18},{x:0.20,y:0.45},{x:0.55,y:0.52},{x:0.35,y:0.72}
-    ] : [
-      {x:0.12,y:0.10},{x:0.58,y:0.08},{x:0.08,y:0.48},{x:0.52,y:0.52},{x:0.32,y:0.32}
-    ];
-    zones = shuffle(zones.slice());
-    
-    positions = [];
-    
-    photos.forEach(function(p, i) {
-      var z = zones[i % zones.length];
-      var rx = (Math.random() - 0.5) * 0.08;
-      var ry = (Math.random() - 0.5) * 0.08;
-      var pw = isMobile ? w * (0.32 + Math.random()*0.06) : w * (0.22 + Math.random()*0.06);
-      
-      positions[i] = {
-        x: (z.x + rx) * w,
-        y: (z.y + ry) * h,
-        w: pw
+
+  const idleVideoUrl = `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`;
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const photosList = photoFiles.map((fileName, index) => {
+      const parts = fileName.replace(/\.[^/.]+$/, "").split('_');
+      return {
+        id: index,
+        url: `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/${fileName}`,
+        title: parts[0] || 'Untitled',
+        date: parts[1] || ''
       };
-      
-      var img = document.createElement('img');
-      img.src = baseUrl + p.file;
-      img.className = 'contactImg';
-      img.draggable = false;
-      img.style.left = positions[i].x + 'px';
-      img.style.top = positions[i].y + 'px';
-      img.style.width = positions[i].w + 'px';
-      img.style.zIndex = zOrder.indexOf(i) + 1;
-      img.dataset.idx = i;
-      
-      img.onmousedown = function(e) { imgDown(e, i); };
-      img.onmouseup = function(e) { imgUp(e, i); };
-      img.onmouseenter = function() { imgHover(i, true); };
-      img.onmouseleave = function() { imgHover(i, false); };
-      img.ontouchstart = function(e) { touchStart(e, i); };
-      img.ontouchmove = function(e) { touchMove(e, i); };
-      img.ontouchend = function(e) { touchEnd(e, i); };
-      
-      contactArea.appendChild(img);
     });
-    
-    document.onmousemove = mouseMove;
-    document.onmouseup = mouseUp;
-  }
-  
-  function imgDown(e, i) {
+    setPhotos(photosList);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (photos.length > 0) {
+      setRandomOrder([...Array(photos.length).keys()].sort(() => Math.random() - 0.5));
+    }
+  }, [photos]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowIntro(false), 2200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setPhotoComments(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(photoComments)); } catch (e) {}
+  }, [photoComments]);
+
+  useEffect(() => {
+    if (!photos[randomOrder[currentPhotoIndex]]) return;
+    const currentPhoto = photos[randomOrder[currentPhotoIndex]];
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = currentPhoto.url;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.height = 50;
+      ctx.drawImage(img, 0, 0, 50, 50);
+      try {
+        const data = ctx.getImageData(0, 0, 50, 50).data;
+        let total = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          total += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        }
+        setIsImageBright(total / 2500 > 140);
+      } catch (e) { setIsImageBright(false); }
+    };
+  }, [currentPhotoIndex, photos, randomOrder]);
+
+  useEffect(() => {
+    if (isMobile) return;
+    const handleMouseMove = (e) => setCursorPosition({ x: e.clientX, y: e.clientY });
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isMobile]);
+
+  useEffect(() => {
+    const resetIdleTimer = () => {
+      setShowIdleScreen(false);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => {
+        setIdlePosition({ x: Math.random() * 50 + 25, y: Math.random() * 50 + 25 });
+        setShowIdleScreen(true);
+      }, 10000);
+    };
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => window.addEventListener(event, resetIdleTimer));
+    resetIdleTimer();
+    return () => {
+      events.forEach(event => window.removeEventListener(event, resetIdleTimer));
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, []);
+
+  const initializePositions = useCallback(() => {
+    if (!photos.length) return;
+    const isMobileView = window.innerWidth <= 768;
+    const shuffledOrder = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
+    const zones = isMobileView ? [
+      { x: 0.15, y: 0.12 }, { x: 0.60, y: 0.18 },
+      { x: 0.20, y: 0.45 }, { x: 0.55, y: 0.52 }, { x: 0.35, y: 0.72 }
+    ] : [
+      { x: 0.12, y: 0.10 }, { x: 0.58, y: 0.08 },
+      { x: 0.08, y: 0.48 }, { x: 0.52, y: 0.52 }, { x: 0.32, y: 0.32 }
+    ];
+    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+    const positions = photos.map((_, index) => {
+      const zone = shuffledZones[index % shuffledZones.length];
+      const randomX = (Math.random() - 0.5) * 0.08;
+      const randomY = (Math.random() - 0.5) * 0.08;
+      return {
+        x: (zone.x + randomX) * window.innerWidth,
+        y: (zone.y + randomY) * window.innerHeight,
+        width: window.innerWidth * (isMobileView ? (0.32 + Math.random() * 0.06) : (0.22 + Math.random() * 0.06))
+      };
+    });
+    setImagePositions(positions);
+    setZIndexOrder(shuffledOrder);
+  }, [photos]);
+
+  useEffect(() => {
+    if (photos.length > 0 && showContactSheet) initializePositions();
+  }, [photos, showContactSheet, initializePositions]);
+
+  const handleNextPhoto = useCallback(() => {
+    if (!randomOrder.length) return;
+    setCurrentPhotoIndex(prev => (prev + 1) % randomOrder.length);
+  }, [randomOrder.length]);
+
+  const handleImageClick = useCallback(() => {
+    if (isMobile) return;
+    handleNextPhoto();
+  }, [isMobile, handleNextPhoto]);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (e.touches?.length > 0) return;
+    const touch = e.changedTouches[0];
+    const diffX = Math.abs(touch.clientX - (e.target._touchStartX || 0));
+    const diffY = Math.abs(touch.clientY - (e.target._touchStartY || 0));
+    const duration = Date.now() - (e.target._touchStartTime || 0);
+    if (diffX < 15 && diffY < 15 && duration < 300) handleNextPhoto();
+  }, [handleNextPhoto]);
+
+  const handleTouchStart = useCallback((e) => {
+    if (e.touches.length === 1) {
+      e.target._touchStartX = e.touches[0].clientX;
+      e.target._touchStartY = e.touches[0].clientY;
+      e.target._touchStartTime = Date.now();
+    }
+  }, []);
+
+  const handleTitleClick = (e) => {
+    e.stopPropagation();
+    setShowIntro(true);
+    setTimeout(() => setShowIntro(false), 3000);
+  };
+
+  const handleSubmitComment = () => {
+    if (!commentText.trim()) return;
+    const textToSave = commentText.trim();
+    const currentPhoto = photos[randomOrder[currentPhotoIndex]];
+    setDissolveText(textToSave);
+    setCommentText('');
+    setDissolving(true);
+    setDissolveOpacity(1);
+    setPhotoComments(prev => {
+      const curr = prev[currentPhoto.id] || [];
+      const newComments = curr.length >= MAX_COMMENTS ? [...curr.slice(1), textToSave] : [...curr, textToSave];
+      return { ...prev, [currentPhoto.id]: newComments };
+    });
+    requestAnimationFrame(() => setDissolveOpacity(0));
+    setTimeout(() => {
+      setShowMergedMessage(true);
+      setDissolving(false);
+      setDissolveText('');
+      setTimeout(() => {
+        setShowMergedMessage(false);
+        setShowCommentBox(false);
+      }, 1800);
+    }, 3500);
+  };
+
+  const handleImageMouseDown = (e, index) => {
     e.preventDefault();
-    var start = Date.now();
-    e.target._start = start;
-    
-    longPress = setTimeout(function() {
-      isPress = true;
-      dragging = i;
-      dragOff = { x: e.clientX - positions[i].x, y: e.clientY - positions[i].y };
-      bringFront(i);
-      getImg(i).classList.add('dragging');
+    e.stopPropagation();
+    lastClickTime.current = Date.now();
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      wasDragging.current = true;
+      setDragOffset({ x: e.clientX - imagePositions[index].x, y: e.clientY - imagePositions[index].y });
+      setDraggingIndex(index);
+      setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
     }, 150);
-  }
-  
-  function imgUp(e, i) {
-    clearTimeout(longPress);
-    if (dragging === i) {
-      dragging = null;
-      getImg(i).classList.remove('dragging');
-      setTimeout(function() { isPress = false; }, 50);
-    } else if (Date.now() - e.target._start < 200 && !isPress) {
-      idx = order.indexOf(i);
-      showPhoto();
-      closeContact();
+  };
+
+  const handleImageMouseUp = (e, index) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    const clickDuration = Date.now() - lastClickTime.current;
+    if (draggingIndex === index) {
+      e.stopPropagation();
+      setDraggingIndex(null);
+      setTimeout(() => { wasDragging.current = false; isLongPress.current = false; }, 50);
+    } else if (clickDuration < 200 && !isLongPress.current && !wasDragging.current) {
+      setCurrentPhotoIndex(randomOrder.indexOf(index));
+      setShowContactSheet(false);
     }
-  }
-  
-  function mouseMove(e) {
-    if (dragging === null) return;
-    positions[dragging].x = e.clientX - dragOff.x;
-    positions[dragging].y = e.clientY - dragOff.y;
-    var img = getImg(dragging);
-    img.style.left = positions[dragging].x + 'px';
-    img.style.top = positions[dragging].y + 'px';
-  }
-  
-  function mouseUp() {
-    if (dragging !== null) {
-      getImg(dragging).classList.remove('dragging');
-      dragging = null;
-      setTimeout(function() { isPress = false; }, 50);
-    }
-  }
-  
-  function touchStart(e, i) {
-    if (activeImg !== null && activeImg !== i) { e.preventDefault(); return; }
-    clearTimeout(longPress);
-    
-    var t = e.touches[0];
-    e.target._tx = t.clientX;
-    e.target._ty = t.clientY;
-    e.target._tt = Date.now();
-    
-    longPress = setTimeout(function() {
-      isPress = true;
-      dragging = i;
-      activeImg = i;
-      dragOff = { x: t.clientX - positions[i].x, y: t.clientY - positions[i].y };
-      bringFront(i);
-      getImg(i).classList.add('dragging');
-    }, 80);
-  }
-  
-  function touchMove(e, i) {
-    if (activeImg !== null && activeImg !== i) return;
-    if (dragging === i && e.touches.length === 1) {
+  };
+
+  useEffect(() => {
+    if (draggingIndex === null) return;
+    const handleMove = (e) => {
+      const newPositions = [...imagePositions];
+      newPositions[draggingIndex] = { ...newPositions[draggingIndex], x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y };
+      setImagePositions(newPositions);
+    };
+    const handleUp = () => {
+      setDraggingIndex(null);
+      setTimeout(() => { wasDragging.current = false; isLongPress.current = false; }, 50);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => { window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleUp); };
+  }, [draggingIndex, dragOffset, imagePositions]);
+
+  const handleImageTouchStart = (e, index) => {
+    if (activeImageIndex !== null && activeImageIndex !== index) { e.preventDefault(); e.stopPropagation(); return; }
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    if (e.touches.length === 2) {
       e.preventDefault();
-      var t = e.touches[0];
-      positions[i].x = t.clientX - dragOff.x;
-      positions[i].y = t.clientY - dragOff.y;
-      var img = getImg(i);
-      img.style.left = positions[i].x + 'px';
-      img.style.top = positions[i].y + 'px';
-    } else if (!isPress) {
-      clearTimeout(longPress);
-    }
-  }
-  
-  function touchEnd(e, i) {
-    clearTimeout(longPress);
-    if (activeImg !== null && activeImg !== i) return;
-    
-    if (dragging === i) {
-      e.preventDefault();
-      dragging = null;
-      activeImg = null;
-      getImg(i).classList.remove('dragging');
-      setTimeout(function() { isPress = false; }, 100);
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const cx = (t1.clientX + t2.clientX) / 2, cy = (t1.clientY + t2.clientY) / 2;
+      initialPinchDistance.current = dist;
+      initialImageWidth.current = imagePositions[index]?.width || 100;
+      initialPinchCenter.current = { x: cx, y: cy };
+      initialImagePos.current = { x: imagePositions[index]?.x || 0, y: imagePositions[index]?.y || 0 };
+      setPinchingIndex(index);
+      setActiveImageIndex(index);
+      setDraggingIndex(null);
+      setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
       return;
     }
-    
-    var t = e.changedTouches[0];
-    var dx = Math.abs(t.clientX - e.target._tx);
-    var dy = Math.abs(t.clientY - e.target._ty);
-    var dt = Date.now() - e.target._tt;
-    
-    if (dx < 15 && dy < 15 && dt < 300 && !isPress) {
-      idx = order.indexOf(i);
-      showPhoto();
-      closeContact();
-    }
-    activeImg = null;
-  }
-  
-  function imgHover(i, on) {
-    if (window.innerWidth <= 768) return;
-    var imgs = contactArea.getElementsByTagName('img');
-    for (var j = 0; j < imgs.length; j++) {
-      if (on && j !== i && dragging !== j) {
-        imgs[j].classList.add('faded');
-      } else {
-        imgs[j].classList.remove('faded');
-      }
-    }
-  }
-  
-  function bringFront(i) {
-    zOrder = zOrder.filter(function(x) { return x !== i; });
-    zOrder.push(i);
-    var imgs = contactArea.getElementsByTagName('img');
-    for (var j = 0; j < imgs.length; j++) {
-      imgs[j].style.zIndex = zOrder.indexOf(parseInt(imgs[j].dataset.idx)) + 1;
-    }
-  }
-  
-  function getImg(i) {
-    return contactArea.querySelector('[data-idx="'+i+'"]');
-  }
-  
-  // Comments view
-  function openComments() {
-    var pid = photos[order[idx]].id;
-    var c = comments[pid] || [];
-    commentsText.innerHTML = c.length ? c.join(' _ ') : '<span style="opacity:0.4">No thoughts shared yet</span>';
-    commentsView.classList.add('show');
-  }
-  
-  function closeComments() {
-    commentsView.classList.remove('show');
-  }
-  
-})();
-</script>
+    const touch = e.touches[0];
+    e.target._touchStartX = touch.clientX;
+    e.target._touchStartY = touch.clientY;
+    e.target._touchStartTime = Date.now();
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      wasDragging.current = true;
+      setDragOffset({ x: touch.clientX - imagePositions[index].x, y: touch.clientY - imagePositions[index].y });
+      setDraggingIndex(index);
+      setActiveImageIndex(index);
+      setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
+    }, 80);
+  };
 
+  const handleImageTouchMove = (e, index) => {
+    if (activeImageIndex !== null && activeImageIndex !== index) return;
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      const targetIndex = activeImageIndex !== null ? activeImageIndex : index;
+      setDraggingIndex(null);
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const cx = (t1.clientX + t2.clientX) / 2, cy = (t1.clientY + t2.clientY) / 2;
+      if (pinchingIndex !== targetIndex) {
+        initialPinchDistance.current = dist;
+        initialImageWidth.current = imagePositions[targetIndex]?.width || 100;
+        initialPinchCenter.current = { x: cx, y: cy };
+        initialImagePos.current = { x: imagePositions[targetIndex]?.x || 0, y: imagePositions[targetIndex]?.y || 0 };
+        setPinchingIndex(targetIndex);
+        setActiveImageIndex(targetIndex);
+        setZIndexOrder(prev => [...prev.filter(i => i !== targetIndex), targetIndex]);
+      } else {
+        const scale = dist / initialPinchDistance.current;
+        const newWidth = Math.max(60, Math.min(window.innerWidth * 0.9, initialImageWidth.current * scale));
+        const deltaX = cx - initialPinchCenter.current.x;
+        const deltaY = cy - initialPinchCenter.current.y;
+        const newPositions = [...imagePositions];
+        newPositions[targetIndex] = { ...newPositions[targetIndex], width: newWidth, x: initialImagePos.current.x + deltaX, y: initialImagePos.current.y + deltaY };
+        setImagePositions(newPositions);
+      }
+      return;
+    }
+    if (draggingIndex === index && e.touches.length === 1) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const newPositions = [...imagePositions];
+      newPositions[index] = { ...newPositions[index], x: touch.clientX - dragOffset.x, y: touch.clientY - dragOffset.y };
+      setImagePositions(newPositions);
+    } else if (!isLongPress.current && longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  const handleImageTouchEnd = (e, index) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    if (activeImageIndex !== null && activeImageIndex !== index) return;
+    if (pinchingIndex === index) { setPinchingIndex(null); setActiveImageIndex(null); initialPinchDistance.current = 0; return; }
+    if (draggingIndex === index) {
+      e.preventDefault();
+      setDraggingIndex(null);
+      setActiveImageIndex(null);
+      setTimeout(() => { isLongPress.current = false; wasDragging.current = false; }, 100);
+      return;
+    }
+    const diffX = Math.abs((e.changedTouches[0]?.clientX || 0) - (e.target._touchStartX || 0));
+    const diffY = Math.abs((e.changedTouches[0]?.clientY || 0) - (e.target._touchStartY || 0));
+    const duration = Date.now() - (e.target._touchStartTime || 0);
+    if (diffX < 15 && diffY < 15 && duration < 300 && !isLongPress.current && !wasDragging.current) {
+      setCurrentPhotoIndex(randomOrder.indexOf(index));
+      setShowContactSheet(false);
+    }
+    setActiveImageIndex(null);
+  };
+
+  if (loading || !photos.length || !randomOrder.length) {
+    return <div style={{ width: '100vw', height: '100vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#111', fontSize: 14 }}>{loading ? 'Loading...' : 'No photos found'}</p>
+    </div>;
+  }
+
+  const currentPhoto = photos[randomOrder[currentPhotoIndex]];
+  const textColor = (el) => hoveredElement === el ? '#0f4c81' : '#111827';
+  const textOpacity = (el) => hoveredElement === el ? 1 : 0.7;
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', background: 'white', position: 'fixed', inset: 0, touchAction: 'manipulation' }}>
+      
+      {!isMobile && (
+        <div style={{
+          position: 'fixed', left: cursorPosition.x, top: cursorPosition.y, transform: 'translate(-50%, -50%)',
+          width: 10, height: 10, borderRadius: '50%', zIndex: 10000, pointerEvents: 'none',
+          backgroundColor: hoveredElement ? '#0f4c81' : 'rgba(0,0,0,0.4)', transition: 'background-color 0.2s'
+        }} />
+      )}
+
+      <div style={{
+        position: 'absolute', inset: 0, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
+        opacity: showIntro ? 1 : 0, transition: 'opacity 2s ease-out', pointerEvents: showIntro ? 'auto' : 'none'
+      }}>
+        <h1 style={{ color: '#111', fontSize: isMobile ? 24 : 32, fontWeight: 300, letterSpacing: '0.1em', textAlign: 'center', padding: '0 16px' }}>{projectTitle}</h1>
+      </div>
+
+      {!showIntro && currentPhoto && (
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? 12 : 24 }}>
+          
+          <div style={{ width: '100%', textAlign: 'center', flexShrink: 0, cursor: 'pointer' }} onClick={handleTitleClick}
+            onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
+            <h2 style={{ fontSize: isMobile ? 15 : 16, fontWeight: 300, letterSpacing: '0.05em', color: textColor('title'), opacity: textOpacity('title'), transition: 'all 0.2s' }}>{projectTitle}</h2>
+          </div>
+
+          <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: isMobile ? '100%' : '42rem', minHeight: 0, overflow: 'hidden', padding: isMobile ? '8px 0' : '16px 0', cursor: 'pointer' }}
+            onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={handleImageClick}>
+            <img src={currentPhoto.url} alt={currentPhoto.title} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 2px 15px rgba(0,0,0,0.08)', touchAction: 'pan-x pan-y pinch-zoom' }} />
+          </div>
+
+          <div style={{ width: '100%', flexShrink: 0, paddingTop: isMobile ? 8 : 12, display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+              <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
+                onMouseEnter={() => setHoveredElement('contact')} onMouseLeave={() => setHoveredElement(null)}
+                style={{ background: 'none', border: 'none', padding: 4, color: textColor('contact'), opacity: textOpacity('contact'), transition: 'all 0.2s', cursor: 'pointer' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
+                onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
+                style={{ background: 'none', border: 'none', padding: 4, fontSize: isMobile ? 13 : 14, fontWeight: 300, color: textColor('share'), opacity: textOpacity('share'), transition: 'all 0.2s', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Share your thoughts
+              </button>
+            </div>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(true); }}
+                onMouseEnter={() => setHoveredElement('photoTitle')} onMouseLeave={() => setHoveredElement(null)}
+                style={{ background: 'none', border: 'none', padding: 4, fontSize: isMobile ? 13 : 14, fontWeight: 300, fontStyle: 'italic', color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), transition: 'all 0.2s', cursor: 'pointer' }}>
+                {currentPhoto.date}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCommentBox && (
+        <div onClick={() => setShowCommentBox(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 50, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(0.5px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '91.666%', maxWidth: 400, textAlign: 'center' }}>
+            <div style={{ height: 140, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+              {!showMergedMessage && !dissolving && (
+                <>
+                  {!commentText && <span style={{ position: 'absolute', fontSize: 14, fontWeight: 300, color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)', pointerEvents: 'none' }}>write down what you're thinking...</span>}
+                  <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
+                    data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" spellCheck="false" autoComplete="off" autoCorrect="off"
+                    style={{ width: '100%', height: 80, background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontWeight: 300, fontSize: 16, lineHeight: 1.5, color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)', fontFamily: 'inherit' }} />
+                </>
+              )}
+              {dissolving && (
+                <p style={{ fontSize: 16, fontWeight: 300, textAlign: 'center', color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*10}px)`, transition: 'opacity 3.5s ease-out, filter 3.5s ease-out', lineHeight: 1.5, margin: 0 }}>{dissolveText}</p>
+              )}
+              {showMergedMessage && (
+                <p style={{ fontSize: 14, fontWeight: 300, color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)', margin: 0 }}>Words merged with image work</p>
+              )}
+            </div>
+            {!showMergedMessage && !dissolving && (
+              <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={handleSubmitComment} style={{ background: 'none', border: 'none', padding: 8, color: isImageBright ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,1)', cursor: 'pointer' }}>
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showContactSheet && (
+        <div style={{ position: 'fixed', inset: 0, background: 'white', zIndex: 50, overflow: 'hidden' }}
+          onClick={() => { if (draggingIndex === null && !isLongPress.current) setShowContactSheet(false); }}>
+          <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(false); }}
+            onMouseEnter={() => setHoveredElement('closeContact')} onMouseLeave={() => setHoveredElement(null)}
+            style={{ position: 'absolute', top: 16, right: 16, zIndex: 60, background: 'none', border: 'none', color: textColor('closeContact'), opacity: hoveredElement === 'closeContact' ? 1 : 0.5, transition: 'all 0.2s', cursor: 'pointer' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <p style={{ position: 'absolute', bottom: isMobile ? 12 : 24, left: '50%', transform: 'translateX(-50%)', fontSize: isMobile ? 13 : 14, fontWeight: 300, color: '#111', opacity: 0.7, pointerEvents: 'none', zIndex: 60 }}>Reorder freely</p>
+          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            {photos.map((photo, index) => {
+              const pos = imagePositions[index];
+              if (!pos) return null;
+              const isOtherHovered = hoveredThumbnail !== null && hoveredThumbnail !== index;
+              const isDragging = draggingIndex === index;
+              const zIndex = zIndexOrder.indexOf(index) + 1;
+              return (
+                <div key={photo.id} style={{
+                  position: 'absolute', left: pos.x, top: pos.y, width: pos.width,
+                  filter: isOtherHovered && !isDragging ? 'blur(4px)' : 'none',
+                  opacity: isOtherHovered && !isDragging ? 0.3 : 1,
+                  zIndex: isDragging || pinchingIndex === index ? 100 : zIndex,
+                  transition: isDragging || pinchingIndex === index ? 'none' : 'filter 0.3s, opacity 0.3s',
+                  transform: isDragging ? 'scale(1.05)' : 'scale(1)',
+                  touchAction: 'none'
+                }}
+                  onMouseDown={(e) => !isMobile && handleImageMouseDown(e, index)}
+                  onMouseUp={(e) => !isMobile && handleImageMouseUp(e, index)}
+                  onMouseEnter={() => !isMobile && setHoveredThumbnail(index)}
+                  onMouseLeave={() => !isMobile && setHoveredThumbnail(null)}
+                  onTouchStart={(e) => handleImageTouchStart(e, index)}
+                  onTouchMove={(e) => handleImageTouchMove(e, index)}
+                  onTouchEnd={(e) => handleImageTouchEnd(e, index)}>
+                  <img src={photo.url} alt={photo.title} style={{ width: '100%', height: 'auto', objectFit: 'cover', boxShadow: isDragging ? '0 8px 30px rgba(0,0,0,0.25)' : '0 2px 10px rgba(0,0,0,0.1)', userSelect: 'none', pointerEvents: 'none' }} draggable={false} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {showCommentsView && currentPhoto && (
+        <div style={{ position: 'fixed', inset: 0, background: 'white', zIndex: 50, overflow: 'auto', padding: 24 }}
+          onClick={() => setShowCommentsView(false)}>
+          {!isMobile && <div style={{ position: 'fixed', left: cursorPosition.x, top: cursorPosition.y, transform: 'translate(-50%, -50%)', width: 10, height: 10, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: '50%', zIndex: 10001, pointerEvents: 'none' }} />}
+          <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
+            onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
+            style={{ position: 'absolute', top: 24, right: 24, zIndex: 60, background: 'none', border: 'none', color: textColor('closeComments'), opacity: hoveredElement === 'closeComments' ? 1 : 0.5, transition: 'all 0.2s', cursor: 'pointer' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div style={{ fontSize: 10, lineHeight: 1.8, color: '#111', opacity: 0.7, fontWeight: 300, wordWrap: 'break-word' }}>
+            {photoComments[currentPhoto.id]?.length > 0 ? (
+              photoComments[currentPhoto.id].map((comment, idx) => (
+                <span key={idx}>{comment}{idx < photoComments[currentPhoto.id].length - 1 && ' _ '}</span>
+              ))
+            ) : <span style={{ opacity: 0.4 }}>No thoughts shared yet</span>}
+          </div>
+        </div>
+      )}
+
+      {showIdleScreen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, pointerEvents: 'none' }}>
+          <video src={idleVideoUrl} autoPlay loop muted playsInline
+            style={{ position: 'absolute', left: `${idlePosition.x}%`, top: `${idlePosition.y}%`, transform: 'translate(-50%, -50%)', width: '60%', maxHeight: '70%', objectFit: 'contain', background: 'transparent' }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PhotoViewer />);
+```
+
+  </script>
 </body>
 </html>
