@@ -3,741 +3,615 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Silent Fragments</title>
   <style>
-    :root { --classic-blue: #0f4c81; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
-      width: 100%; height: 100%; overflow: hidden; position: fixed;
-      background: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-user-select: none; -moz-user-select: none; user-select: none;
+      width: 100%; height: 100%; overflow: hidden;
+      background: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-user-select: none; user-select: none;
     }
-    body { cursor: none; }
-    * { cursor: none !important; }
-    img { pointer-events: none; -webkit-user-drag: none; user-select: none; }
 
 ```
-.custom-cursor {
-  position: fixed; width: 10px; height: 10px; border-radius: 50%;
-  background: rgba(0,0,0,0.4); pointer-events: none; z-index: 10000;
-  transform: translate(-50%, -50%); transition: background-color 0.2s;
-  display: none;
+#intro {
+  position: fixed; inset: 0; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; transition: opacity 2s ease-out;
 }
-.custom-cursor.active { background: var(--classic-blue); }
+#intro.fade { opacity: 0; pointer-events: none; }
+#intro h1 { font-size: 24px; font-weight: 300; color: #111; letter-spacing: 2px; }
 
-@media (min-width: 769px) {
-  .custom-cursor { display: block; }
-}
-
-.intro {
-  position: absolute; inset: 0; background: white; display: flex;
-  align-items: center; justify-content: center; z-index: 50;
-  transition: opacity 2s ease-out;
-}
-.intro h1 { color: #111827; font-size: 2rem; font-weight: 300; letter-spacing: 0.1em; text-align: center; padding: 0 1rem; }
-
-.main-container {
+#app {
   width: 100%; height: 100%; display: flex; flex-direction: column;
-  align-items: center; justify-content: space-between; padding: 24px;
+  padding: 12px; padding-top: max(12px, env(safe-area-inset-top));
 }
 
-.title { text-align: center; flex-shrink: 0; width: 100%; }
-.title h2 {
-  font-size: 16px; font-weight: 300; letter-spacing: 0.05em;
-  color: #111827; opacity: 0.7; transition: all 0.2s; cursor: pointer;
+#header {
+  text-align: center; padding: 8px 0;
 }
-.title:hover h2 { color: var(--classic-blue); opacity: 1; }
+#header h2 {
+  font-size: 15px; font-weight: 300; color: #111; opacity: 0.7;
+  letter-spacing: 1px;
+}
 
-.image-container {
-  flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
-  width: 100%; max-width: 42rem; min-height: 0; overflow: hidden; padding: 16px 0;
+#photoArea {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  min-height: 0; padding: 8px 0;
 }
-.main-image {
+#photo {
   max-width: 100%; max-height: 100%; object-fit: contain;
   box-shadow: 0 2px 15px rgba(0,0,0,0.08);
 }
 
-.bottom-bar {
-  width: 100%; flex-shrink: 0; padding-top: 12px;
-  display: flex; align-items: center; justify-content: space-between;
+#footer {
+  display: flex; align-items: center; padding: 8px 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
-.bottom-bar button {
+#footer > div { flex: 1; }
+#footer .left { text-align: left; }
+#footer .center { text-align: center; }
+#footer .right { text-align: right; }
+
+#footer button {
   background: none; border: none; font-family: inherit;
-  color: #111827; opacity: 0.7; transition: all 0.2s; padding: 4px;
-  cursor: pointer;
+  font-size: 13px; font-weight: 300; color: #111; opacity: 0.7;
+  padding: 8px; cursor: pointer;
 }
-.bottom-bar button:hover { color: var(--classic-blue); opacity: 1; }
-.bottom-bar .left { flex: 1; display: flex; justify-content: flex-start; }
-.bottom-bar .center { flex: 1; display: flex; justify-content: center; }
-.bottom-bar .right { flex: 1; display: flex; justify-content: flex-end; }
-.bottom-bar .date { font-style: italic; font-weight: 300; font-size: 14px; }
-.bottom-bar .share { font-weight: 300; font-size: 14px; }
-.bottom-bar .grid-icon { display: flex; }
+#footer .date { font-style: italic; }
+#footer svg { vertical-align: middle; }
 
-.comment-overlay {
+#commentModal {
   position: fixed; inset: 0; z-index: 50;
-  background: rgba(255,255,255,0.02); backdrop-filter: blur(0.5px);
-  display: flex; align-items: center; justify-content: center;
+  display: none; align-items: center; justify-content: center;
 }
-.comment-box {
-  width: 91.666%; max-width: 28rem; text-align: center;
-  height: 160px; display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-}
-.comment-input-area {
-  height: 100px; width: 100%; display: flex;
-  align-items: center; justify-content: center; position: relative;
-}
-.comment-placeholder {
-  position: absolute; font-size: 14px; font-weight: 300;
-  color: rgba(255,255,255,0.85); text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  pointer-events: none;
-}
-.comment-textarea {
-  width: 100%; height: 100px; background: transparent; border: none;
-  outline: none; resize: none; text-align: center; font-weight: 300;
-  font-size: 16px; line-height: 1.5; color: rgba(255,255,255,0.95);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3); font-family: inherit;
-}
-.dissolve-text {
-  position: absolute; font-size: 16px; font-weight: 300; text-align: center;
-  color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  line-height: 1.5; transition: opacity 3.5s ease-out, filter 3.5s ease-out;
-}
-.merged-text {
-  position: absolute; font-size: 14px; font-weight: 300;
-  color: rgba(255,255,255,0.85);
-}
-.comment-submit {
-  height: 40px; display: flex; align-items: center; justify-content: center;
-}
-.comment-submit button {
-  background: none; border: none; color: rgba(255,255,255,1); padding: 8px;
-}
+#commentModal.show { display: flex; }
 
-.contact-sheet {
-  position: fixed; inset: 0; background: white; z-index: 50; overflow: hidden;
+#commentBox {
+  width: 90%; max-width: 400px; text-align: center; padding: 20px;
 }
-.contact-close {
-  position: absolute; top: 16px; right: 16px; z-index: 60;
-  background: none; border: none; color: #111827; opacity: 0.5;
-  transition: all 0.2s;
+#commentInput {
+  width: 100%; height: 80px; background: transparent; border: none;
+  font-family: inherit; font-size: 16px; font-weight: 300;
+  text-align: center; color: rgba(255,255,255,0.9); resize: none;
+  outline: none; line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-.contact-close:hover { color: var(--classic-blue); opacity: 1; }
-.contact-hint {
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-  font-size: 14px; font-weight: 300; color: #111827; opacity: 0.7;
-  pointer-events: none; z-index: 60;
+#commentInput::placeholder {
+  color: rgba(255,255,255,0.7);
 }
-.contact-image {
-  position: absolute; transition: filter 0.3s, opacity 0.3s;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+#dissolveMsg {
+  font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: opacity 3.5s, filter 3.5s;
+  line-height: 1.5;
 }
-.contact-image.dragging {
-  transform: scale(1.05); box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-  transition: none;
+#mergedMsg {
+  font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.8);
 }
-.contact-image.faded { filter: blur(4px); opacity: 0.3; }
-
-.comments-view {
-  position: fixed; inset: 0; background: white; z-index: 50;
-  overflow: auto; padding: 24px;
+#submitBtn {
+  background: none; border: none; padding: 12px; margin-top: 10px;
+  color: rgba(255,255,255,0.9); cursor: pointer;
 }
-.comments-view .close-btn {
-  position: absolute; top: 24px; right: 24px; z-index: 60;
-  background: none; border: none; color: #111827; opacity: 0.5;
-  transition: all 0.2s;
-}
-.comments-view .close-btn:hover { color: var(--classic-blue); opacity: 1; }
-.comments-content {
-  font-size: 10px; line-height: 1.8; color: #111827; opacity: 0.7;
-  font-weight: 300; word-wrap: break-word;
-}
-
-.idle-screen {
-  position: fixed; inset: 0; z-index: 200; pointer-events: none;
-}
-.idle-video {
-  position: absolute; transform: translate(-50%, -50%);
-  width: 60%; max-height: 70%; object-fit: contain; background: transparent;
-}
-
 .hidden { display: none !important; }
-.opacity-0 { opacity: 0; pointer-events: none; }
 
-@media (max-width: 768px) {
-  .main-container { padding: 12px; }
-  .title h2 { font-size: 15px; }
-  .image-container { padding: 8px 0; }
-  .bottom-bar { padding-top: 8px; }
-  .bottom-bar .date, .bottom-bar .share { font-size: 13px; }
-  .contact-hint { font-size: 13px; bottom: 12px; }
-  .intro h1 { font-size: 1.5rem; }
-  body { cursor: auto; }
-  * { cursor: auto !important; }
+#contactSheet {
+  position: fixed; inset: 0; background: #fff; z-index: 50;
+  display: none;
+}
+#contactSheet.show { display: block; }
+#contactClose {
+  position: absolute; top: 16px; right: 16px; z-index: 60;
+  background: none; border: none; color: #111; opacity: 0.5;
+  cursor: pointer; padding: 8px;
+}
+#contactHint {
+  position: absolute; left: 50%; bottom: 12px;
+  transform: translateX(-50%);
+  font-size: 13px; font-weight: 300; color: #111; opacity: 0.7;
+  z-index: 60;
+}
+.contactImg {
+  position: absolute;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: filter 0.3s, opacity 0.3s, transform 0.1s;
+}
+.contactImg.dragging {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  transform: scale(1.03);
+}
+.contactImg.faded { filter: blur(4px); opacity: 0.3; }
+
+#commentsView {
+  position: fixed; inset: 0; background: #fff; z-index: 50;
+  display: none; overflow: auto; padding: 24px;
+}
+#commentsView.show { display: block; }
+#commentsViewClose {
+  position: absolute; top: 24px; right: 24px;
+  background: none; border: none; color: #111; opacity: 0.5;
+  cursor: pointer; padding: 8px;
+}
+#commentsText {
+  font-size: 10px; line-height: 1.8; color: #111; opacity: 0.7;
+  font-weight: 300;
+}
+
+#idleVideo {
+  position: fixed; z-index: 200; display: none;
+  width: 60%; max-height: 70%; object-fit: contain;
+  transform: translate(-50%, -50%);
+}
+#idleVideo.show { display: block; }
+
+@media (min-width: 769px) {
+  #app { padding: 24px; }
+  #header h2 { font-size: 16px; }
+  #footer button { font-size: 14px; }
+  #photo { max-width: 42rem; }
 }
 ```
 
   </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-  <div class="custom-cursor" id="cursor"></div>
+<div id="intro"><h1>Silent Fragments</h1></div>
 
-  <div class="intro" id="intro">
-    <h1>Silent Fragments</h1>
-  </div>
-
-  <div class="main-container" id="main">
-    <div class="title" id="titleClick">
-      <h2>Silent Fragments</h2>
+<div id="app">
+  <div id="header"><h2>Silent Fragments</h2></div>
+  <div id="photoArea"><img id="photo" src="" alt=""></div>
+  <div id="footer">
+    <div class="left">
+      <button id="gridBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="7" cy="7" r="3"></circle><circle cx="17" cy="7" r="3"></circle>
+          <circle cx="7" cy="17" r="3"></circle><circle cx="17" cy="17" r="3"></circle>
+        </svg>
+      </button>
     </div>
-
-```
-<div class="image-container" id="imageContainer">
-  <img class="main-image" id="mainImage" src="" alt="">
-</div>
-
-<div class="bottom-bar">
-  <div class="left">
-    <button class="grid-icon" id="gridBtn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/>
-        <circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/>
-      </svg>
-    </button>
-  </div>
-  <div class="center">
-    <button class="share" id="shareBtn">Share your thoughts</button>
-  </div>
-  <div class="right">
-    <button class="date" id="dateBtn"></button>
-  </div>
-</div>
-```
-
-  </div>
-
-  <div class="comment-overlay hidden" id="commentOverlay">
-    <div class="comment-box">
-      <div class="comment-input-area">
-        <span class="comment-placeholder" id="commentPlaceholder">write down what you're thinking...</span>
-        <textarea class="comment-textarea" id="commentTextarea" 
-          data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" 
-          spellcheck="false" autocomplete="off" autocorrect="off"></textarea>
-        <p class="dissolve-text hidden" id="dissolveText"></p>
-        <p class="merged-text hidden" id="mergedText">Words merged with image work</p>
-      </div>
-      <div class="comment-submit" id="commentSubmitArea">
-        <button id="submitBtn">
-          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
-          </svg>
-        </button>
-      </div>
+    <div class="center">
+      <button id="shareBtn">Share your thoughts</button>
+    </div>
+    <div class="right">
+      <button id="dateBtn" class="date"></button>
     </div>
   </div>
+</div>
 
-  <div class="contact-sheet hidden" id="contactSheet">
-    <button class="contact-close" id="contactClose">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-    <p class="contact-hint">Reorder freely</p>
-    <div id="contactImages"></div>
+<div id="commentModal">
+  <div id="commentBox">
+    <div id="inputArea">
+      <textarea id="commentInput" placeholder="write down what you're thinking..." 
+        data-gramm="false" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+    <div id="dissolveArea" class="hidden">
+      <p id="dissolveMsg"></p>
+    </div>
+    <div id="mergedArea" class="hidden">
+      <p id="mergedMsg">Words merged with image work</p>
+    </div>
+    <div id="submitArea">
+      <button id="submitBtn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+        </svg>
+      </button>
+    </div>
   </div>
+</div>
 
-  <div class="comments-view hidden" id="commentsView">
-    <button class="close-btn" id="commentsClose">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-    <div class="comments-content" id="commentsContent"></div>
-  </div>
+<div id="contactSheet">
+  <button id="contactClose">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+  <p id="contactHint">Reorder freely</p>
+  <div id="contactArea"></div>
+</div>
 
-  <div class="idle-screen hidden" id="idleScreen">
-    <video class="idle-video" id="idleVideo" autoplay loop muted playsinline></video>
-  </div>
+<div id="commentsView">
+  <button id="commentsViewClose">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+  <div id="commentsText"></div>
+</div>
 
-  <script>
-    const CONFIG = {
-      projectTitle: "Silent Fragments",
-      githubUser: "jpbgd",
-      githubRepo: "Silent-fragments",
-      githubBranch: "main",
-      photoFiles: [
-        'Untitled_250619.jpg', 'Untitled_241221.jpg', 'Untitiled_241208.jpg',
-        'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
-      ],
-      idleTimeout: 10000,
-      storageKey: 'silentFragmentsComments'
-    };
+<video id="idleVideo" autoplay loop muted playsinline></video>
 
-    // State
-    let photos = [];
-    let randomOrder = [];
-    let currentIndex = 0;
-    let photoComments = {};
-    let isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
-    let idleTimer = null;
+<script>
+(function() {
+  var photos = [
+    { id: 0, file: 'Untitled_250619.jpg', date: '250619' },
+    { id: 1, file: 'Untitled_241221.jpg', date: '241221' },
+    { id: 2, file: 'Untitiled_241208.jpg', date: '241208' },
+    { id: 3, file: 'Untitiled_241115.jpg', date: '241115' },
+    { id: 4, file: 'Untitiled_240714.jpg', date: '240714' }
+  ];
+  
+  var baseUrl = 'https://raw.githubusercontent.com/jpbgd/Silent-fragments/main/';
+  var order = shuffle([0,1,2,3,4]);
+  var idx = 0;
+  var comments = loadComments();
+  var idleTimer = null;
+  
+  // Elements
+  var intro = document.getElementById('intro');
+  var photo = document.getElementById('photo');
+  var dateBtn = document.getElementById('dateBtn');
+  var commentModal = document.getElementById('commentModal');
+  var commentInput = document.getElementById('commentInput');
+  var inputArea = document.getElementById('inputArea');
+  var dissolveArea = document.getElementById('dissolveArea');
+  var dissolveMsg = document.getElementById('dissolveMsg');
+  var mergedArea = document.getElementById('mergedArea');
+  var submitArea = document.getElementById('submitArea');
+  var contactSheet = document.getElementById('contactSheet');
+  var contactArea = document.getElementById('contactArea');
+  var commentsView = document.getElementById('commentsView');
+  var commentsText = document.getElementById('commentsText');
+  var idleVideo = document.getElementById('idleVideo');
+  
+  // Contact sheet state
+  var positions = [];
+  var zOrder = [];
+  var dragging = null;
+  var dragOff = {x:0, y:0};
+  var longPress = null;
+  var isPress = false;
+  var activeImg = null;
+  
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  
+  function loadComments() {
+    try { return JSON.parse(localStorage.getItem('sfComments')) || {}; }
+    catch(e) { return {}; }
+  }
+  
+  function saveComments() {
+    try { localStorage.setItem('sfComments', JSON.stringify(comments)); }
+    catch(e) {}
+  }
+  
+  function showPhoto() {
+    var p = photos[order[idx]];
+    photo.src = baseUrl + p.file;
+    dateBtn.textContent = p.date;
+  }
+  
+  function nextPhoto() {
+    idx = (idx + 1) % order.length;
+    showPhoto();
+  }
+  
+  function resetIdle() {
+    idleVideo.classList.remove('show');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {
+      idleVideo.style.left = (Math.random() * 50 + 25) + '%';
+      idleVideo.style.top = (Math.random() * 50 + 25) + '%';
+      idleVideo.classList.add('show');
+      idleVideo.play();
+    }, 10000);
+  }
+  
+  // Init
+  showPhoto();
+  idleVideo.src = baseUrl + 'Paramo.mp4';
+  
+  setTimeout(function() {
+    intro.classList.add('fade');
+  }, 2200);
+  
+  // Events
+  document.getElementById('photoArea').onclick = nextPhoto;
+  
+  document.getElementById('header').onclick = function() {
+    intro.classList.remove('fade');
+    setTimeout(function() { intro.classList.add('fade'); }, 3000);
+  };
+  
+  document.getElementById('gridBtn').onclick = function(e) {
+    e.stopPropagation();
+    openContact();
+  };
+  
+  document.getElementById('shareBtn').onclick = function(e) {
+    e.stopPropagation();
+    openComment();
+  };
+  
+  dateBtn.onclick = function(e) {
+    e.stopPropagation();
+    openComments();
+  };
+  
+  commentModal.onclick = function(e) {
+    if (e.target === commentModal) closeComment();
+  };
+  
+  document.getElementById('submitBtn').onclick = submitComment;
+  
+  document.getElementById('contactClose').onclick = function(e) {
+    e.stopPropagation();
+    closeContact();
+  };
+  
+  contactSheet.onclick = function(e) {
+    if (e.target === contactSheet || e.target === contactArea) closeContact();
+  };
+  
+  document.getElementById('commentsViewClose').onclick = closeComments;
+  commentsView.onclick = closeComments;
+  
+  ['mousedown','mousemove','keydown','touchstart','click'].forEach(function(ev) {
+    window.addEventListener(ev, resetIdle);
+  });
+  
+  resetIdle();
+  
+  // Comment functions
+  function openComment() {
+    commentModal.classList.add('show');
+    inputArea.classList.remove('hidden');
+    dissolveArea.classList.add('hidden');
+    mergedArea.classList.add('hidden');
+    submitArea.classList.remove('hidden');
+    commentInput.value = '';
+    commentInput.focus();
+  }
+  
+  function closeComment() {
+    commentModal.classList.remove('show');
+  }
+  
+  function submitComment() {
+    var text = commentInput.value.trim();
+    if (!text) return;
     
-    // Contact sheet state
-    let imagePositions = [];
-    let zIndexOrder = [];
-    let draggingIndex = null;
-    let dragOffset = { x: 0, y: 0 };
-    let activeImageIndex = null;
-    let longPressTimer = null;
-    let isLongPress = false;
-
-    // Elements
-    const cursor = document.getElementById('cursor');
-    const intro = document.getElementById('intro');
-    const main = document.getElementById('main');
-    const mainImage = document.getElementById('mainImage');
-    const dateBtn = document.getElementById('dateBtn');
-    const commentOverlay = document.getElementById('commentOverlay');
-    const commentTextarea = document.getElementById('commentTextarea');
-    const commentPlaceholder = document.getElementById('commentPlaceholder');
-    const dissolveText = document.getElementById('dissolveText');
-    const mergedText = document.getElementById('mergedText');
-    const commentSubmitArea = document.getElementById('commentSubmitArea');
-    const contactSheet = document.getElementById('contactSheet');
-    const contactImages = document.getElementById('contactImages');
-    const commentsView = document.getElementById('commentsView');
-    const commentsContent = document.getElementById('commentsContent');
-    const idleScreen = document.getElementById('idleScreen');
-    const idleVideo = document.getElementById('idleVideo');
-
-    // Initialize
-    function init() {
-      photos = CONFIG.photoFiles.map((fileName, index) => {
-        const parts = fileName.replace(/\.[^/.]+$/, "").split('_');
-        return {
-          id: index,
-          url: `https://raw.githubusercontent.com/${CONFIG.githubUser}/${CONFIG.githubRepo}/${CONFIG.githubBranch}/${fileName}`,
-          title: parts[0] || 'Untitled',
-          date: parts[1] || ''
-        };
-      });
+    var pid = photos[order[idx]].id;
+    if (!comments[pid]) comments[pid] = [];
+    if (comments[pid].length >= 500) comments[pid].shift();
+    comments[pid].push(text);
+    saveComments();
+    
+    inputArea.classList.add('hidden');
+    submitArea.classList.add('hidden');
+    
+    dissolveMsg.textContent = text;
+    dissolveMsg.style.opacity = '1';
+    dissolveMsg.style.filter = 'blur(0)';
+    dissolveArea.classList.remove('hidden');
+    
+    setTimeout(function() {
+      dissolveMsg.style.opacity = '0';
+      dissolveMsg.style.filter = 'blur(10px)';
+    }, 50);
+    
+    setTimeout(function() {
+      dissolveArea.classList.add('hidden');
+      mergedArea.classList.remove('hidden');
+      setTimeout(closeComment, 1800);
+    }, 3500);
+  }
+  
+  // Contact functions
+  function openContact() {
+    contactSheet.classList.add('show');
+    buildContact();
+  }
+  
+  function closeContact() {
+    contactSheet.classList.remove('show');
+  }
+  
+  function buildContact() {
+    contactArea.innerHTML = '';
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    var isMobile = w <= 768;
+    
+    zOrder = shuffle([0,1,2,3,4]);
+    
+    var zones = isMobile ? [
+      {x:0.15,y:0.12},{x:0.60,y:0.18},{x:0.20,y:0.45},{x:0.55,y:0.52},{x:0.35,y:0.72}
+    ] : [
+      {x:0.12,y:0.10},{x:0.58,y:0.08},{x:0.08,y:0.48},{x:0.52,y:0.52},{x:0.32,y:0.32}
+    ];
+    zones = shuffle(zones.slice());
+    
+    positions = [];
+    
+    photos.forEach(function(p, i) {
+      var z = zones[i % zones.length];
+      var rx = (Math.random() - 0.5) * 0.08;
+      var ry = (Math.random() - 0.5) * 0.08;
+      var pw = isMobile ? w * (0.32 + Math.random()*0.06) : w * (0.22 + Math.random()*0.06);
       
-      randomOrder = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
+      positions[i] = {
+        x: (z.x + rx) * w,
+        y: (z.y + ry) * h,
+        w: pw
+      };
       
-      // Load comments
-      try {
-        const saved = localStorage.getItem(CONFIG.storageKey);
-        if (saved) photoComments = JSON.parse(saved);
-      } catch(e) {}
+      var img = document.createElement('img');
+      img.src = baseUrl + p.file;
+      img.className = 'contactImg';
+      img.draggable = false;
+      img.style.left = positions[i].x + 'px';
+      img.style.top = positions[i].y + 'px';
+      img.style.width = positions[i].w + 'px';
+      img.style.zIndex = zOrder.indexOf(i) + 1;
+      img.dataset.idx = i;
       
-      // Set idle video
-      idleVideo.src = `https://raw.githubusercontent.com/${CONFIG.githubUser}/${CONFIG.githubRepo}/${CONFIG.githubBranch}/Paramo.mp4`;
+      img.onmousedown = function(e) { imgDown(e, i); };
+      img.onmouseup = function(e) { imgUp(e, i); };
+      img.onmouseenter = function() { imgHover(i, true); };
+      img.onmouseleave = function() { imgHover(i, false); };
+      img.ontouchstart = function(e) { touchStart(e, i); };
+      img.ontouchmove = function(e) { touchMove(e, i); };
+      img.ontouchend = function(e) { touchEnd(e, i); };
       
+      contactArea.appendChild(img);
+    });
+    
+    document.onmousemove = mouseMove;
+    document.onmouseup = mouseUp;
+  }
+  
+  function imgDown(e, i) {
+    e.preventDefault();
+    var start = Date.now();
+    e.target._start = start;
+    
+    longPress = setTimeout(function() {
+      isPress = true;
+      dragging = i;
+      dragOff = { x: e.clientX - positions[i].x, y: e.clientY - positions[i].y };
+      bringFront(i);
+      getImg(i).classList.add('dragging');
+    }, 150);
+  }
+  
+  function imgUp(e, i) {
+    clearTimeout(longPress);
+    if (dragging === i) {
+      dragging = null;
+      getImg(i).classList.remove('dragging');
+      setTimeout(function() { isPress = false; }, 50);
+    } else if (Date.now() - e.target._start < 200 && !isPress) {
+      idx = order.indexOf(i);
       showPhoto();
-      setupEvents();
-      
-      // Hide intro after 2.2s
-      setTimeout(() => {
-        intro.classList.add('opacity-0');
-      }, 2200);
-      
-      resetIdleTimer();
+      closeContact();
     }
-
-    function showPhoto() {
-      const photo = photos[randomOrder[currentIndex]];
-      mainImage.src = photo.url;
-      dateBtn.textContent = photo.date;
+  }
+  
+  function mouseMove(e) {
+    if (dragging === null) return;
+    positions[dragging].x = e.clientX - dragOff.x;
+    positions[dragging].y = e.clientY - dragOff.y;
+    var img = getImg(dragging);
+    img.style.left = positions[dragging].x + 'px';
+    img.style.top = positions[dragging].y + 'px';
+  }
+  
+  function mouseUp() {
+    if (dragging !== null) {
+      getImg(dragging).classList.remove('dragging');
+      dragging = null;
+      setTimeout(function() { isPress = false; }, 50);
     }
-
-    function nextPhoto() {
-      currentIndex = (currentIndex + 1) % randomOrder.length;
-      showPhoto();
-    }
-
-    function setupEvents() {
-      // Cursor
-      if (!isMobile) {
-        document.addEventListener('mousemove', (e) => {
-          cursor.style.left = e.clientX + 'px';
-          cursor.style.top = e.clientY + 'px';
-        });
-      } else {
-        cursor.classList.add('hidden');
-      }
-
-      // Hover effects
-      document.querySelectorAll('.bottom-bar button, .title, .contact-close, .comments-view .close-btn').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('active'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('active'));
-      });
-
-      // Image click/tap
-      document.getElementById('imageContainer').addEventListener('click', nextPhoto);
-
-      // Title click
-      document.getElementById('titleClick').addEventListener('click', () => {
-        intro.classList.remove('opacity-0');
-        setTimeout(() => intro.classList.add('opacity-0'), 3000);
-      });
-
-      // Grid button
-      document.getElementById('gridBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openContactSheet();
-      });
-
-      // Share button
-      document.getElementById('shareBtn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openCommentBox();
-      });
-
-      // Date button
-      dateBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openCommentsView();
-      });
-
-      // Comment overlay
-      commentOverlay.addEventListener('click', (e) => {
-        if (e.target === commentOverlay) closeCommentBox();
-      });
-
-      commentTextarea.addEventListener('input', () => {
-        commentPlaceholder.classList.toggle('hidden', commentTextarea.value.length > 0);
-      });
-
-      document.getElementById('submitBtn').addEventListener('click', submitComment);
-
-      // Contact sheet
-      document.getElementById('contactClose').addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeContactSheet();
-      });
-      
-      contactSheet.addEventListener('click', (e) => {
-        if (e.target === contactSheet || e.target === contactImages) closeContactSheet();
-      });
-
-      // Comments view
-      document.getElementById('commentsClose').addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeCommentsView();
-      });
-      
-      commentsView.addEventListener('click', closeCommentsView);
-
-      // Idle timer
-      ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(event => {
-        window.addEventListener(event, resetIdleTimer);
-      });
-    }
-
-    function openCommentBox() {
-      commentOverlay.classList.remove('hidden');
-      commentTextarea.classList.remove('hidden');
-      commentPlaceholder.classList.remove('hidden');
-      dissolveText.classList.add('hidden');
-      mergedText.classList.add('hidden');
-      commentSubmitArea.classList.remove('hidden');
-      commentTextarea.value = '';
-      commentTextarea.focus();
-    }
-
-    function closeCommentBox() {
-      commentOverlay.classList.add('hidden');
-    }
-
-    function submitComment() {
-      const text = commentTextarea.value.trim();
-      if (!text) return;
-      
-      const photo = photos[randomOrder[currentIndex]];
-      
-      // Save comment
-      if (!photoComments[photo.id]) photoComments[photo.id] = [];
-      if (photoComments[photo.id].length >= 500) photoComments[photo.id].shift();
-      photoComments[photo.id].push(text);
-      
-      try {
-        localStorage.setItem(CONFIG.storageKey, JSON.stringify(photoComments));
-      } catch(e) {}
-      
-      // Show dissolve
-      commentTextarea.classList.add('hidden');
-      commentPlaceholder.classList.add('hidden');
-      commentSubmitArea.classList.add('hidden');
-      
-      dissolveText.textContent = text;
-      dissolveText.classList.remove('hidden');
-      dissolveText.style.opacity = '1';
-      dissolveText.style.filter = 'blur(0px)';
-      
-      requestAnimationFrame(() => {
-        dissolveText.style.opacity = '0';
-        dissolveText.style.filter = 'blur(10px)';
-      });
-      
-      setTimeout(() => {
-        dissolveText.classList.add('hidden');
-        mergedText.classList.remove('hidden');
-        
-        setTimeout(() => {
-          closeCommentBox();
-        }, 1800);
-      }, 3500);
-    }
-
-    function openContactSheet() {
-      contactSheet.classList.remove('hidden');
-      initContactPositions();
-    }
-
-    function closeContactSheet() {
-      contactSheet.classList.add('hidden');
-    }
-
-    function initContactPositions() {
-      contactImages.innerHTML = '';
-      
-      const shuffledOrder = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
-      zIndexOrder = shuffledOrder;
-      
-      const zones = isMobile ? [
-        { x: 0.15, y: 0.12 }, { x: 0.65, y: 0.18 },
-        { x: 0.20, y: 0.45 }, { x: 0.60, y: 0.50 }, { x: 0.35, y: 0.75 }
-      ] : [
-        { x: 0.12, y: 0.10 }, { x: 0.60, y: 0.08 },
-        { x: 0.08, y: 0.50 }, { x: 0.55, y: 0.55 }, { x: 0.35, y: 0.35 }
-      ];
-      
-      const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
-      
-      imagePositions = photos.map((_, i) => {
-        const zone = shuffledZones[i % shuffledZones.length];
-        const randomX = (Math.random() - 0.5) * 0.1;
-        const randomY = (Math.random() - 0.5) * 0.1;
-        return {
-          x: (zone.x + randomX) * window.innerWidth,
-          y: (zone.y + randomY) * window.innerHeight,
-          width: window.innerWidth * (isMobile ? (0.32 + Math.random() * 0.08) : (0.22 + Math.random() * 0.08))
-        };
-      });
-      
-      photos.forEach((photo, index) => {
-        const img = document.createElement('img');
-        img.src = photo.url;
-        img.className = 'contact-image';
-        img.dataset.index = index;
-        img.style.left = imagePositions[index].x + 'px';
-        img.style.top = imagePositions[index].y + 'px';
-        img.style.width = imagePositions[index].width + 'px';
-        img.style.zIndex = zIndexOrder.indexOf(index) + 1;
-        img.draggable = false;
-        
-        img.addEventListener('mousedown', (e) => handleImageMouseDown(e, index));
-        img.addEventListener('mouseup', (e) => handleImageMouseUp(e, index));
-        img.addEventListener('mouseenter', () => handleImageHover(index, true));
-        img.addEventListener('mouseleave', () => handleImageHover(index, false));
-        
-        img.addEventListener('touchstart', (e) => handleImageTouchStart(e, index), { passive: false });
-        img.addEventListener('touchmove', (e) => handleImageTouchMove(e, index), { passive: false });
-        img.addEventListener('touchend', (e) => handleImageTouchEnd(e, index));
-        
-        contactImages.appendChild(img);
-      });
-      
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    function handleImageMouseDown(e, index) {
+  }
+  
+  function touchStart(e, i) {
+    if (activeImg !== null && activeImg !== i) { e.preventDefault(); return; }
+    clearTimeout(longPress);
+    
+    var t = e.touches[0];
+    e.target._tx = t.clientX;
+    e.target._ty = t.clientY;
+    e.target._tt = Date.now();
+    
+    longPress = setTimeout(function() {
+      isPress = true;
+      dragging = i;
+      activeImg = i;
+      dragOff = { x: t.clientX - positions[i].x, y: t.clientY - positions[i].y };
+      bringFront(i);
+      getImg(i).classList.add('dragging');
+    }, 80);
+  }
+  
+  function touchMove(e, i) {
+    if (activeImg !== null && activeImg !== i) return;
+    if (dragging === i && e.touches.length === 1) {
       e.preventDefault();
-      const startTime = Date.now();
-      
-      longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        draggingIndex = index;
-        dragOffset = {
-          x: e.clientX - imagePositions[index].x,
-          y: e.clientY - imagePositions[index].y
-        };
-        bringToFront(index);
-        updateImageStyle(index, true);
-      }, 150);
-      
-      e.target._startTime = startTime;
+      var t = e.touches[0];
+      positions[i].x = t.clientX - dragOff.x;
+      positions[i].y = t.clientY - dragOff.y;
+      var img = getImg(i);
+      img.style.left = positions[i].x + 'px';
+      img.style.top = positions[i].y + 'px';
+    } else if (!isPress) {
+      clearTimeout(longPress);
     }
-
-    function handleImageMouseUp(e, index) {
-      clearTimeout(longPressTimer);
-      
-      if (draggingIndex === index) {
-        draggingIndex = null;
-        updateImageStyle(index, false);
-        setTimeout(() => isLongPress = false, 50);
-      } else if (Date.now() - e.target._startTime < 200 && !isLongPress) {
-        currentIndex = randomOrder.indexOf(index);
-        showPhoto();
-        closeContactSheet();
-      }
+  }
+  
+  function touchEnd(e, i) {
+    clearTimeout(longPress);
+    if (activeImg !== null && activeImg !== i) return;
+    
+    if (dragging === i) {
+      e.preventDefault();
+      dragging = null;
+      activeImg = null;
+      getImg(i).classList.remove('dragging');
+      setTimeout(function() { isPress = false; }, 100);
+      return;
     }
-
-    function handleMouseMove(e) {
-      if (draggingIndex === null) return;
-      imagePositions[draggingIndex].x = e.clientX - dragOffset.x;
-      imagePositions[draggingIndex].y = e.clientY - dragOffset.y;
-      const img = contactImages.children[draggingIndex];
-      img.style.left = imagePositions[draggingIndex].x + 'px';
-      img.style.top = imagePositions[draggingIndex].y + 'px';
+    
+    var t = e.changedTouches[0];
+    var dx = Math.abs(t.clientX - e.target._tx);
+    var dy = Math.abs(t.clientY - e.target._ty);
+    var dt = Date.now() - e.target._tt;
+    
+    if (dx < 15 && dy < 15 && dt < 300 && !isPress) {
+      idx = order.indexOf(i);
+      showPhoto();
+      closeContact();
     }
-
-    function handleMouseUp() {
-      if (draggingIndex !== null) {
-        updateImageStyle(draggingIndex, false);
-        draggingIndex = null;
-        setTimeout(() => isLongPress = false, 50);
-      }
-    }
-
-    function handleImageTouchStart(e, index) {
-      if (activeImageIndex !== null && activeImageIndex !== index) {
-        e.preventDefault();
-        return;
-      }
-      
-      clearTimeout(longPressTimer);
-      
-      const touch = e.touches[0];
-      e.target._touchStartX = touch.clientX;
-      e.target._touchStartY = touch.clientY;
-      e.target._touchStartTime = Date.now();
-      
-      longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        draggingIndex = index;
-        activeImageIndex = index;
-        dragOffset = {
-          x: touch.clientX - imagePositions[index].x,
-          y: touch.clientY - imagePositions[index].y
-        };
-        bringToFront(index);
-        updateImageStyle(index, true);
-      }, 80);
-    }
-
-    function handleImageTouchMove(e, index) {
-      if (activeImageIndex !== null && activeImageIndex !== index) return;
-      
-      if (draggingIndex === index && e.touches.length === 1) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        imagePositions[index].x = touch.clientX - dragOffset.x;
-        imagePositions[index].y = touch.clientY - dragOffset.y;
-        const img = contactImages.children[index];
-        img.style.left = imagePositions[index].x + 'px';
-        img.style.top = imagePositions[index].y + 'px';
-      } else if (!isLongPress) {
-        clearTimeout(longPressTimer);
-      }
-    }
-
-    function handleImageTouchEnd(e, index) {
-      clearTimeout(longPressTimer);
-      
-      if (activeImageIndex !== null && activeImageIndex !== index) return;
-      
-      if (draggingIndex === index) {
-        e.preventDefault();
-        draggingIndex = null;
-        activeImageIndex = null;
-        updateImageStyle(index, false);
-        setTimeout(() => isLongPress = false, 100);
-        return;
-      }
-      
-      const touch = e.changedTouches[0];
-      const diffX = Math.abs(touch.clientX - e.target._touchStartX);
-      const diffY = Math.abs(touch.clientY - e.target._touchStartY);
-      const duration = Date.now() - e.target._touchStartTime;
-      
-      if (diffX < 15 && diffY < 15 && duration < 300 && !isLongPress) {
-        currentIndex = randomOrder.indexOf(index);
-        showPhoto();
-        closeContactSheet();
-      }
-      
-      activeImageIndex = null;
-    }
-
-    function handleImageHover(index, isHovering) {
-      if (isMobile) return;
-      Array.from(contactImages.children).forEach((img, i) => {
-        if (isHovering && i !== index && draggingIndex !== i) {
-          img.classList.add('faded');
-        } else {
-          img.classList.remove('faded');
-        }
-      });
-    }
-
-    function bringToFront(index) {
-      zIndexOrder = zIndexOrder.filter(i => i !== index);
-      zIndexOrder.push(index);
-      Array.from(contactImages.children).forEach((img, i) => {
-        img.style.zIndex = zIndexOrder.indexOf(i) + 1;
-      });
-    }
-
-    function updateImageStyle(index, isDragging) {
-      const img = contactImages.children[index];
-      if (isDragging) {
-        img.classList.add('dragging');
-        img.style.zIndex = 100;
+    activeImg = null;
+  }
+  
+  function imgHover(i, on) {
+    if (window.innerWidth <= 768) return;
+    var imgs = contactArea.getElementsByTagName('img');
+    for (var j = 0; j < imgs.length; j++) {
+      if (on && j !== i && dragging !== j) {
+        imgs[j].classList.add('faded');
       } else {
-        img.classList.remove('dragging');
-        img.style.zIndex = zIndexOrder.indexOf(index) + 1;
+        imgs[j].classList.remove('faded');
       }
     }
-
-    function openCommentsView() {
-      const photo = photos[randomOrder[currentIndex]];
-      const comments = photoComments[photo.id] || [];
-      
-      if (comments.length > 0) {
-        commentsContent.innerHTML = comments.map((c, i) => 
-          c + (i < comments.length - 1 ? ' _ ' : '')
-        ).join('');
-      } else {
-        commentsContent.innerHTML = '<span style="opacity:0.4">No thoughts shared yet</span>';
-      }
-      
-      commentsView.classList.remove('hidden');
+  }
+  
+  function bringFront(i) {
+    zOrder = zOrder.filter(function(x) { return x !== i; });
+    zOrder.push(i);
+    var imgs = contactArea.getElementsByTagName('img');
+    for (var j = 0; j < imgs.length; j++) {
+      imgs[j].style.zIndex = zOrder.indexOf(parseInt(imgs[j].dataset.idx)) + 1;
     }
-
-    function closeCommentsView() {
-      commentsView.classList.add('hidden');
-    }
-
-    function resetIdleTimer() {
-      idleScreen.classList.add('hidden');
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
-        const x = Math.random() * 50 + 25;
-        const y = Math.random() * 50 + 25;
-        idleVideo.style.left = x + '%';
-        idleVideo.style.top = y + '%';
-        idleScreen.classList.remove('hidden');
-        idleVideo.play();
-      }, CONFIG.idleTimeout);
-    }
-
-    // Start
-    init();
-  </script>
+  }
+  
+  function getImg(i) {
+    return contactArea.querySelector('[data-idx="'+i+'"]');
+  }
+  
+  // Comments view
+  function openComments() {
+    var pid = photos[order[idx]].id;
+    var c = comments[pid] || [];
+    commentsText.innerHTML = c.length ? c.join(' _ ') : '<span style="opacity:0.4">No thoughts shared yet</span>';
+    commentsView.classList.add('show');
+  }
+  
+  function closeComments() {
+    commentsView.classList.remove('show');
+  }
+  
+})();
+</script>
 
 </body>
 </html>
