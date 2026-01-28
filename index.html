@@ -478,7 +478,7 @@
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
                 <h2 className="text-sm md:text-base font-light tracking-wide transition-all"
-                  style={{ color: textColor('title'), opacity: textOpacity('title'), fontSize: isMobile ? 13 : 14 }}>{projectTitle}</h2>
+                  style={{ color: textColor('title'), opacity: textOpacity('title'), fontSize: isMobile ? 15 : 16 }}>{projectTitle}</h2>
               </div>
 
               <div className="flex items-center justify-center w-full cursor-pointer"
@@ -586,7 +586,7 @@
               </button>
               <p className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-900 font-light z-[60]"
                 style={{ pointerEvents: 'none', fontSize: isMobile ? 13 : 14, opacity: 0.7 }}>
-                {isMobile ? 'Hold & drag to reorder freely' : 'Click & drag to reorder freely'}
+                Reorder freely
               </p>
               <div className="w-full h-full relative">
                 {photos.map((photo, index) => {
