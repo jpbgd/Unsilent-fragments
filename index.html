@@ -89,8 +89,9 @@
       ];
       
       // Idle screensaver video
-      const idleVideoUrl = `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/__IMG_____7615.MOV__`;
+      const idleVideoUrl = `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/paramo.mp4`;
       const [showIdleScreen, setShowIdleScreen] = useState(false);
+      const [idlePosition, setIdlePosition] = useState({ x: 50, y: 50 });
       const idleTimer = useRef(null);
       const IDLE_TIMEOUT = 10000; // 10 segundos
 
@@ -134,7 +135,10 @@
         const resetIdleTimer = () => {
           setShowIdleScreen(false);
           if (idleTimer.current) clearTimeout(idleTimer.current);
-          idleTimer.current = setTimeout(() => setShowIdleScreen(true), IDLE_TIMEOUT);
+          idleTimer.current = setTimeout(() => {
+            setIdlePosition({ x: Math.random() * 50 + 25, y: Math.random() * 50 + 25 });
+            setShowIdleScreen(true);
+          }, IDLE_TIMEOUT);
         };
 
         const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
@@ -193,7 +197,7 @@
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-      // Contact sheet positions - completamente aleatorias cada vez
+      // Contact sheet positions - distribuidas para maximizar visibilidad
       const initializePositions = useCallback(() => {
         if (!photos.length) return;
         const isMobileView = window.innerWidth <= 768;
@@ -201,18 +205,41 @@
         // Shuffle order for z-index
         const shuffledOrder = [...Array(photos.length).keys()].sort(() => Math.random() - 0.5);
         
-        const positions = photos.map(() => {
+        // Definir zonas de la pantalla para distribuir las imágenes
+        const zones = isMobileView ? [
+          { x: 0.15, y: 0.12 },
+          { x: 0.65, y: 0.18 },
+          { x: 0.20, y: 0.45 },
+          { x: 0.60, y: 0.50 },
+          { x: 0.35, y: 0.75 }
+        ] : [
+          { x: 0.12, y: 0.10 },
+          { x: 0.60, y: 0.08 },
+          { x: 0.08, y: 0.50 },
+          { x: 0.55, y: 0.55 },
+          { x: 0.35, y: 0.35 }
+        ];
+        
+        // Mezclar las zonas aleatoriamente
+        const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+        
+        const positions = photos.map((_, index) => {
+          const zone = shuffledZones[index % shuffledZones.length];
+          // Agregar variación random dentro de la zona
+          const randomOffsetX = (Math.random() - 0.5) * 0.1;
+          const randomOffsetY = (Math.random() - 0.5) * 0.1;
+          
           if (isMobileView) {
             return {
-              x: Math.random() * (window.innerWidth * 0.5) + window.innerWidth * 0.1,
-              y: Math.random() * (window.innerHeight * 0.6) + window.innerHeight * 0.1,
-              width: window.innerWidth * (0.3 + Math.random() * 0.15)
+              x: (zone.x + randomOffsetX) * window.innerWidth,
+              y: (zone.y + randomOffsetY) * window.innerHeight,
+              width: window.innerWidth * (0.32 + Math.random() * 0.08)
             };
           }
           return { 
-            x: Math.random() * (window.innerWidth * 0.6) + window.innerWidth * 0.1, 
-            y: Math.random() * (window.innerHeight * 0.5) + window.innerHeight * 0.1, 
-            width: window.innerWidth * (0.2 + Math.random() * 0.15)
+            x: (zone.x + randomOffsetX) * window.innerWidth, 
+            y: (zone.y + randomOffsetY) * window.innerHeight, 
+            width: window.innerWidth * (0.22 + Math.random() * 0.08)
           };
         });
         setImagePositions(positions);
@@ -597,8 +624,8 @@
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <p className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-900 font-light z-[60]"
-                style={{ pointerEvents: 'none', fontSize: isMobile ? 13 : 14, opacity: 0.7 }}>
+              <p className="absolute left-1/2 transform -translate-x-1/2 text-gray-900 font-light z-[60]"
+                style={{ pointerEvents: 'none', fontSize: isMobile ? 13 : 14, opacity: 0.7, bottom: isMobile ? '12px' : '24px' }}>
                 Reorder freely
               </p>
               <div className="w-full h-full relative">
@@ -661,16 +688,22 @@
           {/* Idle screensaver */}
           {showIdleScreen && (
             <div className="fixed inset-0 z-[200]" style={{ pointerEvents: 'none' }}>
-              <video src={idleVideoUrl} autoPlay loop muted playsInline
+              <video 
+                src={idleVideoUrl} 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
                 style={{ 
                   position: 'absolute',
-                  left: `${Math.random() * 60 + 10}%`,
-                  top: `${Math.random() * 60 + 10}%`,
+                  left: `${idlePosition.x}%`,
+                  top: `${idlePosition.y}%`,
                   transform: 'translate(-50%, -50%)',
-                  maxWidth: '40%', 
+                  width: '30%',
                   maxHeight: '40%', 
                   objectFit: 'contain'
-                }} />
+                }} 
+              />
             </div>
           )}
         </div>
