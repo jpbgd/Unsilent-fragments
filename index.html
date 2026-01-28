@@ -87,6 +87,12 @@
         'Untitled_250619.jpg', 'Untitled_241221.jpg', 'Untitiled_241208.jpg',
         'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
       ];
+      
+      // Idle screensaver video
+      const idleVideoUrl = `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/__IMG_____7615.MOV__`;
+      const [showIdleScreen, setShowIdleScreen] = useState(false);
+      const idleTimer = useRef(null);
+      const IDLE_TIMEOUT = 10000; // 10 segundos
 
       // Initialize
       useEffect(() => {
@@ -122,6 +128,26 @@
       }, []);
 
       useEffect(() => { setImageLoaded(false); }, [currentPhotoIndex]);
+
+      // Idle screen timer
+      useEffect(() => {
+        const resetIdleTimer = () => {
+          setShowIdleScreen(false);
+          if (idleTimer.current) clearTimeout(idleTimer.current);
+          idleTimer.current = setTimeout(() => setShowIdleScreen(true), IDLE_TIMEOUT);
+        };
+
+        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => window.addEventListener(event, resetIdleTimer));
+        
+        // Start timer initially
+        resetIdleTimer();
+
+        return () => {
+          events.forEach(event => window.removeEventListener(event, resetIdleTimer));
+          if (idleTimer.current) clearTimeout(idleTimer.current);
+        };
+      }, []);
 
       // Load/save comments
       useEffect(() => {
@@ -255,8 +281,8 @@
           setTimeout(() => {
             setShowMergedMessage(false);
             setShowCommentBox(false);
-          }, 800);
-        }, 2250);
+          }, 1300);
+        }, 2750);
       };
 
       // Contact sheet - Desktop handlers
@@ -357,7 +383,7 @@
           setDraggingIndex(index);
           setActiveImageIndex(index);
           setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
-        }, 150);
+        }, 80);
       };
 
       const handleImageTouchMove = (e, index) => {
@@ -490,45 +516,29 @@
               </div>
 
               <div className="w-full flex-shrink-0" style={{ paddingTop: isMobile ? '8px' : '12px', position: 'relative', zIndex: 5 }}>
-                {/* Mobile: Share your thoughts en fila separada arriba */}
-                {isMobile && (
-                  <div className="flex justify-center" style={{ paddingBottom: '12px' }}>
-                    <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
-                      onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
-                      className="font-light transition-all" style={{ fontSize: 13, color: textColor('share'), opacity: textOpacity('share') }}>
-                      Share your thoughts
-                    </button>
-                  </div>
-                )}
-                
                 <div className="flex items-center w-full">
                   <div className="flex-1 flex justify-start">
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
                       onMouseEnter={() => setHoveredElement('contact')} onMouseLeave={() => setHoveredElement(null)}
                       className="transition-all" style={{ color: textColor('contact'), opacity: textOpacity('contact') }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/>
+                        <circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/>
                       </svg>
                     </button>
                   </div>
-                  
-                  {/* Desktop: Share your thoughts en el centro */}
-                  {!isMobile && (
-                    <div className="flex-1 flex justify-center">
-                      <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
-                        onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
-                        className="font-light transition-all" style={{ fontSize: 14, color: textColor('share'), opacity: textOpacity('share') }}>
-                        Share your thoughts
-                      </button>
-                    </div>
-                  )}
-                  
+                  <div className="flex-1 flex justify-center">
+                    <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
+                      onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
+                      className="font-light transition-all" style={{ fontSize: isMobile ? 13 : 14, color: textColor('share'), opacity: textOpacity('share') }}>
+                      Share your thoughts
+                    </button>
+                  </div>
                   <div className="flex-1 flex justify-end">
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(true); }}
                       onMouseEnter={() => setHoveredElement('photoTitle')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-light italic transition-all text-right"
                       style={{ fontSize: isMobile ? 13 : 14, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px', pointerEvents: 'auto', position: 'relative', zIndex: 10 }}>
-                      {currentPhoto.title}, {currentPhoto.date}
+                      {currentPhoto.date}
                     </button>
                   </div>
                 </div>
@@ -549,11 +559,11 @@
                           write down what you're thinking...</span>}
                         <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
                           className="w-full h-full bg-transparent border-none outline-none resize-none text-sm text-center font-light"
-                          style={{ lineHeight: '128px', cursor: isMobile ? 'auto' : 'none', fontSize: 16, color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)' }} />
+                          style={{ lineHeight: '1.5', cursor: isMobile ? 'auto' : 'none', fontSize: 16, color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', paddingTop: '50px' }} />
                       </>
                     ) : dissolving ? (
-                      <p className="text-lg font-light" style={{ color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*10}px)`, transform: `scale(${1+(1-dissolveOpacity)*0.15})`, transition: 'all 2.25s ease-out' }}>
+                      <p className="text-base font-light text-center" style={{ color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
+                        opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*10}px)`, transition: 'opacity 2.75s ease-out, filter 2.75s ease-out', lineHeight: '1.5' }}>
                         {dissolveText}
                       </p>
                     ) : (
@@ -642,6 +652,15 @@
                   ) : <span style={{ opacity: 0.4 }}>No thoughts shared yet</span>}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Idle screensaver */}
+          {showIdleScreen && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center" 
+              style={{ backgroundColor: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+              <video src={idleVideoUrl} autoPlay loop muted playsInline
+                style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', boxShadow: '0 4px 30px rgba(0,0,0,0.1)' }} />
             </div>
           )}
         </div>
