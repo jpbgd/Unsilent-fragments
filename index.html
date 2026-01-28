@@ -14,11 +14,12 @@
       margin: 0; padding: 0; overflow: hidden; position: fixed;
       width: 100%; height: 100%; background: white;
       -webkit-user-select: none; -moz-user-select: none; user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     body { cursor: none; }
     * { cursor: none !important; box-sizing: border-box; }
     img { pointer-events: none; -webkit-user-drag: none; }
-    input, textarea { font-size: 16px !important; }
+    input, textarea { font-size: 16px !important; font-family: inherit; }
     #root:empty { display: none; }
     #root { opacity: 0; animation: fadeIn 0.3s ease-in 0.1s forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
@@ -69,6 +70,7 @@
       const [zIndexOrder, setZIndexOrder] = useState([]);
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
       const [pinchingIndex, setPinchingIndex] = useState(null);
+      const [activeImageIndex, setActiveImageIndex] = useState(null);
 
       // Refs
       const longPressTimer = useRef(null);
@@ -318,6 +320,13 @@
 
       // Contact sheet - Mobile handlers
       const handleImageTouchStart = (e, index) => {
+        // Si ya hay una imagen activa y no es esta, ignorar
+        if (activeImageIndex !== null && activeImageIndex !== index) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
         
         if (e.touches.length === 2) {
@@ -330,6 +339,7 @@
           initialPinchCenter.current = { x: cx, y: cy };
           initialImagePos.current = { x: imagePositions[index]?.x || 0, y: imagePositions[index]?.y || 0 };
           setPinchingIndex(index);
+          setActiveImageIndex(index);
           setDraggingIndex(null);
           setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
           return;
@@ -345,34 +355,44 @@
           wasDragging.current = true;
           setDragOffset({ x: touch.clientX - imagePositions[index].x, y: touch.clientY - imagePositions[index].y });
           setDraggingIndex(index);
+          setActiveImageIndex(index);
           setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
         }, 150);
       };
 
       const handleImageTouchMove = (e, index) => {
+        // Si hay imagen activa y no es esta, ignorar
+        if (activeImageIndex !== null && activeImageIndex !== index) {
+          return;
+        }
+        
         if (e.touches.length === 2) {
           e.preventDefault();
           if (longPressTimer.current) clearTimeout(longPressTimer.current);
+          
+          // Usar la imagen activa o la actual
+          const targetIndex = activeImageIndex !== null ? activeImageIndex : index;
           setDraggingIndex(null);
           
           const t1 = e.touches[0], t2 = e.touches[1];
           const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           const cx = (t1.clientX + t2.clientX) / 2, cy = (t1.clientY + t2.clientY) / 2;
           
-          if (pinchingIndex !== index) {
+          if (pinchingIndex !== targetIndex) {
             initialPinchDistance.current = dist;
-            initialImageWidth.current = imagePositions[index]?.width || 100;
+            initialImageWidth.current = imagePositions[targetIndex]?.width || 100;
             initialPinchCenter.current = { x: cx, y: cy };
-            initialImagePos.current = { x: imagePositions[index]?.x || 0, y: imagePositions[index]?.y || 0 };
-            setPinchingIndex(index);
-            setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
+            initialImagePos.current = { x: imagePositions[targetIndex]?.x || 0, y: imagePositions[targetIndex]?.y || 0 };
+            setPinchingIndex(targetIndex);
+            setActiveImageIndex(targetIndex);
+            setZIndexOrder(prev => [...prev.filter(i => i !== targetIndex), targetIndex]);
           } else {
             const scale = dist / initialPinchDistance.current;
             const newWidth = Math.max(60, Math.min(window.innerWidth * 0.9, initialImageWidth.current * scale));
             const deltaX = cx - initialPinchCenter.current.x;
             const deltaY = cy - initialPinchCenter.current.y;
             const newPositions = [...imagePositions];
-            newPositions[index] = { ...newPositions[index], width: newWidth, x: initialImagePos.current.x + deltaX, y: initialImagePos.current.y + deltaY };
+            newPositions[targetIndex] = { ...newPositions[targetIndex], width: newWidth, x: initialImagePos.current.x + deltaX, y: initialImagePos.current.y + deltaY };
             setImagePositions(newPositions);
           }
           return;
@@ -392,8 +412,14 @@
       const handleImageTouchEnd = (e, index) => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
         
+        // Si hay imagen activa y no es esta, ignorar
+        if (activeImageIndex !== null && activeImageIndex !== index) {
+          return;
+        }
+        
         if (pinchingIndex === index) {
           setPinchingIndex(null);
+          setActiveImageIndex(null);
           initialPinchDistance.current = 0;
           return;
         }
@@ -401,6 +427,7 @@
         if (draggingIndex === index) {
           e.preventDefault();
           setDraggingIndex(null);
+          setActiveImageIndex(null);
           setTimeout(() => { isLongPress.current = false; wasDragging.current = false; }, 100);
           return;
         }
@@ -413,6 +440,8 @@
           setCurrentPhotoIndex(randomOrder.indexOf(index));
           setShowContactSheet(false);
         }
+        
+        setActiveImageIndex(null);
       };
 
       // Render
@@ -449,18 +478,29 @@
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
                 <h2 className="text-sm md:text-base font-light tracking-wide transition-all"
-                  style={{ color: textColor('title'), opacity: textOpacity('title') }}>{projectTitle}</h2>
+                  style={{ color: textColor('title'), opacity: textOpacity('title'), fontSize: isMobile ? 13 : 14 }}>{projectTitle}</h2>
               </div>
 
               <div className="flex items-center justify-center w-full cursor-pointer"
                 style={{ flex: '1 1 auto', maxWidth: isMobile ? '100%' : '42rem', minHeight: 0, overflow: 'hidden', padding: isMobile ? '8px 0' : '16px 0' }}
                 onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={handleImageClick}>
                 <img src={currentPhoto.url} alt={currentPhoto.title} className="object-contain" onLoad={() => setImageLoaded(true)}
-                  style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 30px rgba(0,0,0,0.12)', touchAction: 'pan-x pan-y pinch-zoom',
+                  style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 2px 15px rgba(0,0,0,0.08)', touchAction: 'pan-x pan-y pinch-zoom',
                     opacity: imageLoaded ? 1 : 0, transition: 'opacity 0.5s ease-in' }} />
               </div>
 
               <div className="w-full flex-shrink-0" style={{ paddingTop: isMobile ? '8px' : '12px', position: 'relative', zIndex: 5 }}>
+                {/* Mobile: Share your thoughts en fila separada arriba */}
+                {isMobile && (
+                  <div className="flex justify-center" style={{ paddingBottom: '12px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
+                      onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
+                      className="font-light transition-all" style={{ fontSize: 13, color: textColor('share'), opacity: textOpacity('share') }}>
+                      Share your thoughts
+                    </button>
+                  </div>
+                )}
+                
                 <div className="flex items-center w-full">
                   <div className="flex-1 flex justify-start">
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
@@ -471,18 +511,23 @@
                       </svg>
                     </button>
                   </div>
-                  <div className="flex-1 flex justify-center">
-                    <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
-                      onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
-                      className="font-light transition-all" style={{ fontSize: isMobile ? 11 : 12, color: textColor('share'), opacity: textOpacity('share') }}>
-                      Share your thoughts
-                    </button>
-                  </div>
+                  
+                  {/* Desktop: Share your thoughts en el centro */}
+                  {!isMobile && (
+                    <div className="flex-1 flex justify-center">
+                      <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
+                        onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
+                        className="font-light transition-all" style={{ fontSize: 14, color: textColor('share'), opacity: textOpacity('share') }}>
+                        Share your thoughts
+                      </button>
+                    </div>
+                  )}
+                  
                   <div className="flex-1 flex justify-end">
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(true); }}
                       onMouseEnter={() => setHoveredElement('photoTitle')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-light italic transition-all text-right"
-                      style={{ fontSize: isMobile ? 11 : 12, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px', pointerEvents: 'auto', position: 'relative', zIndex: 10 }}>
+                      style={{ fontSize: isMobile ? 13 : 14, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px', pointerEvents: 'auto', position: 'relative', zIndex: 10 }}>
                       {currentPhoto.title}, {currentPhoto.date}
                     </button>
                   </div>
@@ -540,8 +585,8 @@
                 </svg>
               </button>
               <p className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-gray-900 font-light z-[60]"
-                style={{ pointerEvents: 'none', fontSize: isMobile ? 11 : 12, opacity: 0.7 }}>
-                {isMobile ? 'Hold & drag to reorder freely • Tap to view' : 'Click & drag to reorder freely • Click to view'}
+                style={{ pointerEvents: 'none', fontSize: isMobile ? 13 : 14, opacity: 0.7 }}>
+                {isMobile ? 'Hold & drag to reorder freely' : 'Click & drag to reorder freely'}
               </p>
               <div className="w-full h-full relative">
                 {photos.map((photo, index) => {
@@ -589,7 +634,7 @@
                 </svg>
               </button>
               <div className="w-full h-full overflow-auto" style={{ padding: 24 }}>
-                <div className="font-light" style={{ fontSize: 8, lineHeight: 1.8, color: '#111827', opacity: 0.7, wordWrap: 'break-word' }}>
+                <div className="font-light" style={{ fontSize: 10, lineHeight: 1.8, color: '#111827', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
                       <span key={idx}>{comment}{idx < photoComments[currentPhoto.id].length - 1 && ' _ '}</span>
