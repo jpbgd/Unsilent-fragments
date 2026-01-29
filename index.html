@@ -8,7 +8,6 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://use.typekit.net/xxxxxxx.css">
   <style>
     @font-face {
       font-family: 'Helvetica Now';
@@ -56,14 +55,16 @@
       left: 0;
     }
     @keyframes fadeIn { to { opacity: 1; } }
-    textarea::placeholder { color: rgba(255,255,255,0.7); }
-    textarea.bright-bg::placeholder { color: rgba(0,0,0,0.5); }
     
-    /* Prevenir que el teclado móvil mueva el contenido */
     @supports (-webkit-touch-callout: none) {
       body, html, #root {
         height: -webkit-fill-available;
       }
+    }
+
+    @keyframes fadeOutText {
+      0% { opacity: 1; filter: blur(0px); }
+      100% { opacity: 0; filter: blur(8px); }
     }
   </style>
 </head>
@@ -98,12 +99,13 @@
       const [hoveredElement, setHoveredElement] = useState(null);
       const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
-      // Comment states
+      // Comment states - SIMPLIFICADO
       const [commentText, setCommentText] = useState('');
-      const [commentPhase, setCommentPhase] = useState('input'); // 'input', 'fadeout', 'merged'
-      const [savedText, setSavedText] = useState('');
-      const [fadeOpacity, setFadeOpacity] = useState(1);
+      const [displayText, setDisplayText] = useState('');
+      const [isFading, setIsFading] = useState(false);
+      const [showMerged, setShowMerged] = useState(false);
       const [photoComments, setPhotoComments] = useState({});
+      const inputRef = useRef(null);
 
       // Contact sheet states
       const [imagePositions, setImagePositions] = useState([]);
@@ -118,7 +120,6 @@
       const [showScreensaver, setShowScreensaver] = useState(false);
       const [screensaverPosition, setScreensaverPosition] = useState({ x: 0, y: 0 });
       const inactivityTimer = useRef(null);
-      const lastActivityTime = useRef(Date.now());
 
       // Refs
       const longPressTimer = useRef(null);
@@ -136,12 +137,11 @@
         'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
       ];
 
-      // Capturar altura inicial del viewport antes de que aparezca el teclado
+      // Capturar altura inicial del viewport
       useEffect(() => {
         const initialHeight = window.innerHeight;
         setViewportHeight(initialHeight);
         
-        // Solo actualizar si la altura aumenta (teclado se cierra)
         const handleResize = () => {
           if (window.innerHeight > viewportHeight) {
             setViewportHeight(window.innerHeight);
@@ -231,7 +231,7 @@
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-      // Screensaver - inactivity detection (corregido)
+      // Screensaver
       useEffect(() => {
         const startInactivityTimer = () => {
           if (inactivityTimer.current) {
@@ -248,18 +248,16 @@
               y: Math.random() * (vh - videoHeight)
             });
             setShowScreensaver(true);
-          }, 10000); // 10 segundos de inactividad
+          }, 10000);
         };
 
         const resetInactivity = () => {
-          lastActivityTime.current = Date.now();
           if (showScreensaver) {
             setShowScreensaver(false);
           }
           startInactivityTimer();
         };
 
-        // Iniciar el timer
         startInactivityTimer();
         
         const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'touchmove', 'click'];
@@ -348,15 +346,24 @@
         setTimeout(() => setShowIntro(false), 3000);
       };
 
-      // CORREGIDO: Lógica del submit comment
+      // Abrir comment box
+      const handleOpenCommentBox = () => {
+        setCommentText('');
+        setDisplayText('');
+        setIsFading(false);
+        setShowMerged(false);
+        setShowCommentBox(true);
+      };
+
+      // Submit comment
       const handleSubmitComment = () => {
         if (!commentText.trim()) return;
+        
         const textToSave = commentText.trim();
         const currentPhoto = photos[randomOrder[currentPhotoIndex]];
         
-        // Guardar el texto y limpiar input
-        setSavedText(textToSave);
-        setCommentText('');
+        // Guardar el texto que se va a mostrar
+        setDisplayText(textToSave);
         
         // Guardar en localStorage
         setPhotoComments(prev => {
@@ -365,38 +372,31 @@
           return { ...prev, [currentPhoto.id]: newComments };
         });
 
-        // Fase 1: Fadeout (3 segundos)
-        setCommentPhase('fadeout');
-        setFadeOpacity(1);
-        
-        // Iniciar fade después de un pequeño delay para asegurar render
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setFadeOpacity(0);
-          });
-        });
+        // Iniciar fade out
+        setIsFading(true);
 
         // Después de 3 segundos, mostrar "merged"
         setTimeout(() => {
-          setCommentPhase('merged');
+          setIsFading(false);
+          setShowMerged(true);
         }, 3000);
 
-        // Después de 0.5 segundos más (3.5 total), cerrar todo instantáneamente
+        // Después de 0.5 segundos más, cerrar todo
         setTimeout(() => {
-          setCommentPhase('input');
-          setSavedText('');
-          setFadeOpacity(1);
           setShowCommentBox(false);
+          setCommentText('');
+          setDisplayText('');
+          setShowMerged(false);
         }, 3500);
       };
 
-      // Cerrar comment box y resetear estado
+      // Cerrar comment box
       const handleCloseCommentBox = () => {
         setShowCommentBox(false);
-        setCommentPhase('input');
         setCommentText('');
-        setSavedText('');
-        setFadeOpacity(1);
+        setDisplayText('');
+        setIsFading(false);
+        setShowMerged(false);
       };
 
       // Contact sheet - Desktop handlers
@@ -584,6 +584,9 @@
       const textColor = (el) => isHovering(el) ? '#0f4c81' : '#111827';
       const textOpacity = (el) => isHovering(el) ? 1 : 0.7;
 
+      // Placeholder text
+      const placeholderText = "a memory, a feeling, anything it evokes...";
+
       return (
         <div 
           className="w-screen bg-white relative" 
@@ -649,10 +652,10 @@
                     </button>
                   </div>
                   <div className="flex-1 flex justify-center">
-                    <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
+                    <button onClick={(e) => { e.stopPropagation(); handleOpenCommentBox(); }}
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-light transition-all" style={{ fontSize: isMobile ? 13 : 14, color: textColor('share'), opacity: textOpacity('share') }}>
-                      Share your thoughts
+                      Lend your words
                     </button>
                   </div>
                   <div className="flex-1 flex justify-end">
@@ -668,132 +671,122 @@
             </div>
           )}
 
-          {/* CORREGIDO: Comment Box Overlay */}
+          {/* COMMENT BOX */}
           {showCommentBox && (
             <div 
-              className="fixed z-50" 
               onClick={handleCloseCommentBox}
               style={{ 
                 position: 'fixed',
                 top: 0,
                 left: 0,
                 right: 0,
+                bottom: 0,
                 height: viewportHeight,
-                backgroundColor: 'rgba(255,255,255,0.02)', 
+                backgroundColor: 'rgba(0,0,0,0.02)', 
                 backdropFilter: 'blur(0.5px)', 
-                display: 'flex', 
-                alignItems: 'center', 
+                zIndex: 50,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
+              {/* Contenedor central */}
               <div 
-                style={{ 
-                  width: '90%', 
-                  maxWidth: 400, 
-                  textAlign: 'center',
-                  position: 'relative'
-                }} 
                 onClick={(e) => e.stopPropagation()}
+                style={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '85%',
+                  maxWidth: 360
+                }}
               >
-                {/* Contenedor con altura fija para mantener posición */}
-                <div style={{ 
-                  height: 120,
+                {/* Contenedor de texto con altura fija */}
+                <div style={{
+                  width: '100%',
+                  height: 60,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   position: 'relative'
                 }}>
-                  {/* Input Phase */}
-                  {commentPhase === 'input' && (
-                    <textarea 
-                      value={commentText} 
-                      onChange={(e) => setCommentText(e.target.value)} 
-                      autoFocus
-                      placeholder="write down what you're thinking..."
-                      className={isImageBright ? 'bright-bg' : ''}
-                      data-gramm="false"
-                      data-gramm_editor="false"
-                      data-enable-grammarly="false"
-                      spellCheck="false"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      style={{ 
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%', 
-                        height: '100%', 
-                        background: 'transparent', 
-                        border: 'none', 
-                        outline: 'none', 
-                        resize: 'none', 
-                        textAlign: 'center', 
-                        fontSize: 16, 
-                        fontWeight: 300, 
-                        lineHeight: 1.6,
-                        padding: '20px 10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: isMobile ? 'auto' : 'none', 
-                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
-                      }} 
-                    />
+                  {/* Estado: Input (no fading, no merged) */}
+                  {!isFading && !showMerged && (
+                    <>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder={placeholderText}
+                        autoFocus
+                        style={{
+                          position: 'absolute',
+                          width: '100%',
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          textAlign: 'center',
+                          fontSize: 16,
+                          fontWeight: 300,
+                          color: 'rgba(255,255,255,0.95)',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          caretColor: 'rgba(255,255,255,0.95)'
+                        }}
+                      />
+                      <style>{`
+                        input::placeholder {
+                          color: rgba(255,255,255,0.95) !important;
+                          opacity: 1 !important;
+                        }
+                      `}</style>
+                    </>
                   )}
 
-                  {/* Fadeout Phase - texto exactamente en la misma posición */}
-                  {commentPhase === 'fadeout' && (
-                    <p style={{ 
-                      margin: 0, 
-                      padding: '20px 10px',
-                      fontSize: 16, 
-                      fontWeight: 300, 
-                      lineHeight: 1.6, 
+                  {/* Estado: Fading */}
+                  {isFading && (
+                    <span style={{
+                      fontSize: 16,
+                      fontWeight: 300,
+                      color: 'rgba(255,255,255,0.95)',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.3)',
                       textAlign: 'center',
-                      width: '100%',
-                      color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                      textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                      opacity: fadeOpacity, 
-                      filter: `blur(${(1 - fadeOpacity) * 8}px)`, 
-                      transition: 'opacity 3s ease-out, filter 3s ease-out' 
+                      animation: 'fadeOutText 3s ease-out forwards'
                     }}>
-                      {savedText}
-                    </p>
+                      {displayText}
+                    </span>
                   )}
 
-                  {/* Merged Phase - misma posición */}
-                  {commentPhase === 'merged' && (
-                    <p style={{ 
-                      margin: 0, 
-                      fontSize: 14, 
-                      fontWeight: 300, 
-                      color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)' 
+                  {/* Estado: Merged */}
+                  {showMerged && (
+                    <span style={{
+                      fontSize: 14,
+                      fontWeight: 300,
+                      color: 'rgba(255,255,255,0.85)',
+                      textAlign: 'center'
                     }}>
-                      Words merged with image work
-                    </p>
+                      Your trace forms the image
+                    </span>
                   )}
                 </div>
 
-                {/* Botón submit - solo visible en fase input */}
-                {commentPhase === 'input' && (
-                  <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button 
-                      onClick={handleSubmitComment} 
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        padding: 8, 
-                        cursor: 'pointer', 
-                        color: isImageBright ? 'rgba(0,0,0,0.6)' : '#ffffff' 
-                      }}
-                    >
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
-                      </svg>
-                    </button>
-                  </div>
+                {/* Botón submit - solo visible cuando no está fading ni merged */}
+                {!isFading && !showMerged && (
+                  <button 
+                    onClick={handleSubmitComment}
+                    style={{ 
+                      marginTop: 16,
+                      background: 'none', 
+                      border: 'none', 
+                      padding: 8,
+                      color: 'rgba(255,255,255,0.95)'
+                    }}
+                  >
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
+                    </svg>
+                  </button>
                 )}
               </div>
             </div>
@@ -864,7 +857,7 @@
                     photoComments[currentPhoto.id].map((comment, idx) => (
                       <span key={idx}>{comment}{idx < photoComments[currentPhoto.id].length - 1 && ' _ '}</span>
                     ))
-                  ) : <span style={{ opacity: 0.4 }}>No thoughts shared yet</span>}
+                  ) : <span style={{ opacity: 0.4 }}>Hi</span>}
                 </div>
               </div>
             </div>
