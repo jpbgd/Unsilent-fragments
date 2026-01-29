@@ -22,6 +22,8 @@
     #root:empty { display: none; }
     #root { opacity: 0; animation: fadeIn 0.3s ease-in 0.1s forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
+    textarea::placeholder { color: rgba(255,255,255,0.7); }
+    textarea.bright-bg::placeholder { color: rgba(0,0,0,0.5); }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -70,6 +72,9 @@
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
       const [pinchingIndex, setPinchingIndex] = useState(null);
       const [activeImageIndex, setActiveImageIndex] = useState(null);
+      const [showScreensaver, setShowScreensaver] = useState(false);
+      const [screensaverPosition, setScreensaverPosition] = useState({ x: 0, y: 0 });
+      const inactivityTimer = useRef(null);
 
       // Refs
       const longPressTimer = useRef(null);
@@ -165,6 +170,39 @@
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
+
+      // Screensaver - inactivity detection
+      useEffect(() => {
+        const resetInactivity = () => {
+          if (showScreensaver) {
+            setShowScreensaver(false);
+          }
+          if (inactivityTimer.current) {
+            clearTimeout(inactivityTimer.current);
+          }
+          inactivityTimer.current = setTimeout(() => {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const videoWidth = vw * 0.5;
+            const videoHeight = vh * 0.5;
+            setScreensaverPosition({
+              x: Math.random() * (vw - videoWidth),
+              y: Math.random() * (vh - videoHeight)
+            });
+            setShowScreensaver(true);
+          }, 10000);
+        };
+
+        resetInactivity();
+        
+        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => window.addEventListener(event, resetInactivity));
+        
+        return () => {
+          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+          events.forEach(event => window.removeEventListener(event, resetInactivity));
+        };
+      }, [showScreensaver]);
 
       // Contact sheet positions
       const initializePositions = useCallback(() => {
@@ -528,27 +566,85 @@
           {showCommentBox && (
             <div className="fixed z-50" onClick={() => setShowCommentBox(false)}
               style={{ inset: 0, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(0.5px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="w-11/12 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
-                <div style={{ height: 160, position: 'relative' }}>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    {!showMergedMessage && !dissolving && (
-                      <>
-                        {!commentText && <span style={{ position: 'absolute', fontSize: 14, fontWeight: 300, pointerEvents: 'none', color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)' }}>
-                          write down what you're thinking...</span>}
-                        <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
-                          style={{ width: '100%', height: 100, background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 300, lineHeight: 1.6, cursor: isMobile ? 'auto' : 'none', color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)' }} />
-                      </>
-                    )}
-                    {dissolving && (
-                      <p style={{ margin: 0, fontSize: 16, fontWeight: 300, lineHeight: 1.6, color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 3s ease-out, filter 3s ease-out' }}>
+              <div style={{ width: '90%', maxWidth: 400, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ position: 'relative', height: 120 }}>
+                  {!showMergedMessage && !dissolving && (
+                    <textarea 
+                      value={commentText} 
+                      onChange={(e) => setCommentText(e.target.value)} 
+                      autoFocus
+                      placeholder="write down what you're thinking..."
+                      className={isImageBright ? 'bright-bg' : ''}
+                      data-gramm="false"
+                      data-gramm_editor="false"
+                      data-enable-grammarly="false"
+                      spellCheck="false"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%', 
+                        height: '100%', 
+                        background: 'transparent', 
+                        border: 'none', 
+                        outline: 'none', 
+                        resize: 'none', 
+                        textAlign: 'center', 
+                        fontSize: 16, 
+                        fontWeight: 300, 
+                        lineHeight: 1.6,
+                        padding: '20px 10px',
+                        cursor: isMobile ? 'auto' : 'none', 
+                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
+                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
+                        '::placeholder': { color: isImageBright ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }
+                      }} 
+                    />
+                  )}
+                  {dissolving && (
+                    <div style={{ 
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '20px 10px'
+                    }}>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: 16, 
+                        fontWeight: 300, 
+                        lineHeight: 1.6, 
+                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
+                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
+                        opacity: dissolveOpacity, 
+                        filter: `blur(${(1-dissolveOpacity)*8}px)`, 
+                        transition: 'opacity 3s ease-out, filter 3s ease-out' 
+                      }}>
                         {dissolveText}
                       </p>
-                    )}
-                    {showMergedMessage && (
+                    </div>
+                  )}
+                  {showMergedMessage && (
+                    <div style={{ 
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
                       <p style={{ margin: 0, fontSize: 14, fontWeight: 300, color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)' }}>Words merged with image work</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
                 {!showMergedMessage && !dissolving && (
                   <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -631,6 +727,29 @@
                   ) : <span style={{ opacity: 0.4 }}>No thoughts shared yet</span>}
                 </div>
               </div>
+            </div>
+          )}
+
+          {showScreensaver && (
+            <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
+              onClick={() => setShowScreensaver(false)}>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{
+                  position: 'absolute',
+                  left: screensaverPosition.x,
+                  top: screensaverPosition.y,
+                  width: '50%',
+                  height: 'auto',
+                  maxHeight: '50%',
+                  objectFit: 'contain'
+                }}
+              >
+                <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
+              </video>
             </div>
           )}
         </div>
