@@ -8,7 +8,14 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://use.typekit.net/xxxxxxx.css">
   <style>
+    @font-face {
+      font-family: 'Helvetica Now';
+      src: local('Helvetica Now Display'), local('Helvetica Now Text'), local('HelveticaNow'), local('Helvetica Neue'), local('Helvetica'), local('Arial');
+      font-weight: 100 900;
+      font-style: normal;
+    }
     :root { --classic-blue: #0f4c81; }
     html {
       height: 100%;
@@ -26,10 +33,18 @@
       -moz-user-select: none; 
       user-select: none;
       cursor: none;
+      font-family: 'Helvetica Now', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
-    * { cursor: none !important; box-sizing: border-box; }
+    * { 
+      cursor: none !important; 
+      box-sizing: border-box;
+      font-family: 'Helvetica Now', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
     img { pointer-events: none; -webkit-user-drag: none; }
-    input, textarea { font-size: 16px !important; }
+    input, textarea { 
+      font-size: 16px !important;
+      font-family: 'Helvetica Now', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
     #root:empty { display: none; }
     #root { 
       opacity: 0; 
@@ -366,13 +381,13 @@
           setCommentPhase('merged');
         }, 3000);
 
-        // Después de 2 segundos más, cerrar todo instantáneamente
+        // Después de 0.5 segundos más (3.5 total), cerrar todo instantáneamente
         setTimeout(() => {
           setCommentPhase('input');
           setSavedText('');
           setFadeOpacity(1);
           setShowCommentBox(false);
-        }, 5000);
+        }, 3500);
       };
 
       // Cerrar comment box y resetear estado
@@ -611,7 +626,7 @@
               
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
-                <h2 className="text-sm md:text-base font-light tracking-wide transition-all"
+                <h2 className="text-base md:text-lg font-light tracking-wide transition-all"
                   style={{ color: textColor('title'), opacity: textOpacity('title') }}>{projectTitle}</h2>
               </div>
 
@@ -636,7 +651,7 @@
                   <div className="flex-1 flex justify-center">
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
-                      className="font-light transition-all" style={{ fontSize: isMobile ? 11 : 12, color: textColor('share'), opacity: textOpacity('share') }}>
+                      className="font-light transition-all" style={{ fontSize: isMobile ? 13 : 14, color: textColor('share'), opacity: textOpacity('share') }}>
                       Share your thoughts
                     </button>
                   </div>
@@ -676,14 +691,20 @@
                   width: '90%', 
                   maxWidth: 400, 
                   textAlign: 'center',
-                  position: 'relative',
-                  height: 160
+                  position: 'relative'
                 }} 
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Input Phase */}
-                {commentPhase === 'input' && (
-                  <>
+                {/* Contenedor con altura fija para mantener posición */}
+                <div style={{ 
+                  height: 120,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}>
+                  {/* Input Phase */}
+                  {commentPhase === 'input' && (
                     <textarea 
                       value={commentText} 
                       onChange={(e) => setCommentText(e.target.value)} 
@@ -698,8 +719,11 @@
                       autoCorrect="off"
                       autoCapitalize="off"
                       style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
                         width: '100%', 
-                        height: 120, 
+                        height: '100%', 
                         background: 'transparent', 
                         border: 'none', 
                         outline: 'none', 
@@ -709,46 +733,26 @@
                         fontWeight: 300, 
                         lineHeight: 1.6,
                         padding: '20px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         cursor: isMobile ? 'auto' : 'none', 
                         color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
                         textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
                       }} 
                     />
-                    <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <button 
-                        onClick={handleSubmitComment} 
-                        style={{ 
-                          background: 'none', 
-                          border: 'none', 
-                          padding: 8, 
-                          cursor: 'pointer', 
-                          color: isImageBright ? 'rgba(0,0,0,0.6)' : '#ffffff' 
-                        }}
-                      >
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </>
-                )}
+                  )}
 
-                {/* Fadeout Phase - texto en la misma posición */}
-                {commentPhase === 'fadeout' && (
-                  <div style={{ 
-                    width: '100%',
-                    height: 120,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px 10px'
-                  }}>
+                  {/* Fadeout Phase - texto exactamente en la misma posición */}
+                  {commentPhase === 'fadeout' && (
                     <p style={{ 
                       margin: 0, 
+                      padding: '20px 10px',
                       fontSize: 16, 
                       fontWeight: 300, 
                       lineHeight: 1.6, 
                       textAlign: 'center',
+                      width: '100%',
                       color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
                       textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
                       opacity: fadeOpacity, 
@@ -757,19 +761,10 @@
                     }}>
                       {savedText}
                     </p>
-                  </div>
-                )}
+                  )}
 
-                {/* Merged Phase - misma posición, aparece instantáneo, desaparece instantáneo */}
-                {commentPhase === 'merged' && (
-                  <div style={{ 
-                    width: '100%',
-                    height: 120,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px 10px'
-                  }}>
+                  {/* Merged Phase - misma posición */}
+                  {commentPhase === 'merged' && (
                     <p style={{ 
                       margin: 0, 
                       fontSize: 14, 
@@ -778,6 +773,26 @@
                     }}>
                       Words merged with image work
                     </p>
+                  )}
+                </div>
+
+                {/* Botón submit - solo visible en fase input */}
+                {commentPhase === 'input' && (
+                  <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <button 
+                      onClick={handleSubmitComment} 
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        padding: 8, 
+                        cursor: 'pointer', 
+                        color: isImageBright ? 'rgba(0,0,0,0.6)' : '#ffffff' 
+                      }}
+                    >
+                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
