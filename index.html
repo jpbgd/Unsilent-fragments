@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Silent Fragments</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -10,20 +10,46 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --classic-blue: #0f4c81; }
-    html, body {
-      margin: 0; padding: 0; overflow: hidden; position: fixed;
-      width: 100%; height: 100%; background: white;
-      -webkit-user-select: none; -moz-user-select: none; user-select: none;
+    html {
+      height: 100%;
+      overflow: hidden;
     }
-    body { cursor: none; }
+    body {
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden; 
+      position: fixed;
+      width: 100%; 
+      height: 100%; 
+      background: white;
+      -webkit-user-select: none; 
+      -moz-user-select: none; 
+      user-select: none;
+      cursor: none;
+    }
     * { cursor: none !important; box-sizing: border-box; }
     img { pointer-events: none; -webkit-user-drag: none; }
     input, textarea { font-size: 16px !important; }
     #root:empty { display: none; }
-    #root { opacity: 0; animation: fadeIn 0.3s ease-in 0.1s forwards; }
+    #root { 
+      opacity: 0; 
+      animation: fadeIn 0.3s ease-in 0.1s forwards;
+      height: 100%;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
     @keyframes fadeIn { to { opacity: 1; } }
     textarea::placeholder { color: rgba(255,255,255,0.7); }
     textarea.bright-bg::placeholder { color: rgba(0,0,0,0.5); }
+    
+    /* Prevenir que el teclado móvil mueva el contenido */
+    @supports (-webkit-touch-callout: none) {
+      body, html, #root {
+        height: -webkit-fill-available;
+      }
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -48,6 +74,7 @@
       const [imageLoaded, setImageLoaded] = useState(false);
       const [isMobile, setIsMobile] = useState(false);
       const [isImageBright, setIsImageBright] = useState(false);
+      const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
       // UI states
       const [showCommentBox, setShowCommentBox] = useState(false);
@@ -58,10 +85,9 @@
 
       // Comment states
       const [commentText, setCommentText] = useState('');
-      const [dissolving, setDissolving] = useState(false);
-      const [dissolveText, setDissolveText] = useState('');
-      const [dissolveOpacity, setDissolveOpacity] = useState(1);
-      const [showMergedMessage, setShowMergedMessage] = useState(false);
+      const [commentPhase, setCommentPhase] = useState('input'); // 'input', 'fadeout', 'merged'
+      const [savedText, setSavedText] = useState('');
+      const [fadeOpacity, setFadeOpacity] = useState(1);
       const [photoComments, setPhotoComments] = useState({});
 
       // Contact sheet states
@@ -72,9 +98,12 @@
       const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
       const [pinchingIndex, setPinchingIndex] = useState(null);
       const [activeImageIndex, setActiveImageIndex] = useState(null);
+      
+      // Screensaver states
       const [showScreensaver, setShowScreensaver] = useState(false);
       const [screensaverPosition, setScreensaverPosition] = useState({ x: 0, y: 0 });
       const inactivityTimer = useRef(null);
+      const lastActivityTime = useRef(Date.now());
 
       // Refs
       const longPressTimer = useRef(null);
@@ -92,7 +121,23 @@
         'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
       ];
 
-      // Initialize
+      // Capturar altura inicial del viewport antes de que aparezca el teclado
+      useEffect(() => {
+        const initialHeight = window.innerHeight;
+        setViewportHeight(initialHeight);
+        
+        // Solo actualizar si la altura aumenta (teclado se cierra)
+        const handleResize = () => {
+          if (window.innerHeight > viewportHeight) {
+            setViewportHeight(window.innerHeight);
+          }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+
+      // Initialize mobile detection
       useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
         checkMobile();
@@ -171,15 +216,13 @@
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-      // Screensaver - inactivity detection
+      // Screensaver - inactivity detection (corregido)
       useEffect(() => {
-        const resetInactivity = () => {
-          if (showScreensaver) {
-            setShowScreensaver(false);
-          }
+        const startInactivityTimer = () => {
           if (inactivityTimer.current) {
             clearTimeout(inactivityTimer.current);
           }
+          
           inactivityTimer.current = setTimeout(() => {
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -190,13 +233,22 @@
               y: Math.random() * (vh - videoHeight)
             });
             setShowScreensaver(true);
-          }, 10000);
+          }, 10000); // 10 segundos de inactividad
         };
 
-        resetInactivity();
+        const resetInactivity = () => {
+          lastActivityTime.current = Date.now();
+          if (showScreensaver) {
+            setShowScreensaver(false);
+          }
+          startInactivityTimer();
+        };
+
+        // Iniciar el timer
+        startInactivityTimer();
         
-        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
-        events.forEach(event => window.addEventListener(event, resetInactivity));
+        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'touchmove', 'click'];
+        events.forEach(event => window.addEventListener(event, resetInactivity, { passive: true }));
         
         return () => {
           if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
@@ -211,7 +263,6 @@
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         
-        // Zonas predefinidas para spread out
         const zones = isMobileView ? [
           { x: 0.08, y: 0.08 }, { x: 0.55, y: 0.12 },
           { x: 0.12, y: 0.42 }, { x: 0.52, y: 0.48 },
@@ -222,7 +273,6 @@
           { x: 0.30, y: 0.28 }
         ];
         
-        // Mezclar zonas aleatoriamente
         const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
         
         const positions = photos.map((_, index) => {
@@ -283,32 +333,55 @@
         setTimeout(() => setShowIntro(false), 3000);
       };
 
+      // CORREGIDO: Lógica del submit comment
       const handleSubmitComment = () => {
         if (!commentText.trim()) return;
         const textToSave = commentText.trim();
         const currentPhoto = photos[randomOrder[currentPhotoIndex]];
         
-        setDissolveText(textToSave);
+        // Guardar el texto y limpiar input
+        setSavedText(textToSave);
         setCommentText('');
-        setDissolving(true);
-        setDissolveOpacity(1);
-
+        
+        // Guardar en localStorage
         setPhotoComments(prev => {
           const curr = prev[currentPhoto.id] || [];
           const newComments = curr.length >= MAX_COMMENTS ? [...curr.slice(1), textToSave] : [...curr, textToSave];
           return { ...prev, [currentPhoto.id]: newComments };
         });
 
-        requestAnimationFrame(() => setDissolveOpacity(0));
+        // Fase 1: Fadeout (3 segundos)
+        setCommentPhase('fadeout');
+        setFadeOpacity(1);
+        
+        // Iniciar fade después de un pequeño delay para asegurar render
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setFadeOpacity(0);
+          });
+        });
+
+        // Después de 3 segundos, mostrar "merged"
         setTimeout(() => {
-          setShowMergedMessage(true);
-          setDissolving(false);
-          setDissolveText('');
-          setTimeout(() => {
-            setShowMergedMessage(false);
-            setShowCommentBox(false);
-          }, 2000);
+          setCommentPhase('merged');
         }, 3000);
+
+        // Después de 2 segundos más, cerrar todo instantáneamente
+        setTimeout(() => {
+          setCommentPhase('input');
+          setSavedText('');
+          setFadeOpacity(1);
+          setShowCommentBox(false);
+        }, 5000);
+      };
+
+      // Cerrar comment box y resetear estado
+      const handleCloseCommentBox = () => {
+        setShowCommentBox(false);
+        setCommentPhase('input');
+        setCommentText('');
+        setSavedText('');
+        setFadeOpacity(1);
       };
 
       // Contact sheet - Desktop handlers
@@ -372,7 +445,6 @@
 
       // Contact sheet - Mobile handlers
       const handleImageTouchStart = (e, index) => {
-        // Si ya hay una imagen activa y no es esta, ignorar
         if (activeImageIndex !== null && activeImageIndex !== index) return;
         
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -409,14 +481,12 @@
       };
 
       const handleImageTouchMove = (e, index) => {
-        // Si hay imagen activa y no es esta, ignorar
         if (activeImageIndex !== null && activeImageIndex !== index) return;
         
         if (e.touches.length === 2) {
           e.preventDefault();
           if (longPressTimer.current) clearTimeout(longPressTimer.current);
           
-          // Solo hacer pinch en la imagen activa
           const targetIndex = activeImageIndex !== null ? activeImageIndex : index;
           setDraggingIndex(null);
           
@@ -458,7 +528,6 @@
       const handleImageTouchEnd = (e, index) => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
         
-        // Si hay imagen activa y no es esta, ignorar
         if (activeImageIndex !== null && activeImageIndex !== index) return;
         
         if (pinchingIndex === index) {
@@ -501,7 +570,17 @@
       const textOpacity = (el) => isHovering(el) ? 1 : 0.7;
 
       return (
-        <div className="w-screen bg-white relative" style={{ cursor: 'none', overflow: 'hidden', position: 'fixed', inset: 0, touchAction: 'manipulation' }}>
+        <div 
+          className="w-screen bg-white relative" 
+          style={{ 
+            cursor: 'none', 
+            overflow: 'hidden', 
+            position: 'fixed', 
+            inset: 0, 
+            touchAction: 'manipulation',
+            height: viewportHeight 
+          }}
+        >
           
           {!isMobile && (
             <div className="fixed pointer-events-none" style={{
@@ -517,7 +596,18 @@
           </div>
 
           {!showIntro && currentPhoto && (
-            <div className="w-full flex flex-col items-center justify-between" style={{ height: '100%', padding: isMobile ? '12px' : '24px', overflow: 'hidden' }}>
+            <div 
+              className="w-full flex flex-col items-center justify-between" 
+              style={{ 
+                height: viewportHeight, 
+                padding: isMobile ? '12px' : '24px', 
+                overflow: 'hidden',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0
+              }}
+            >
               
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
@@ -563,12 +653,37 @@
             </div>
           )}
 
+          {/* CORREGIDO: Comment Box Overlay */}
           {showCommentBox && (
-            <div className="fixed z-50" onClick={() => setShowCommentBox(false)}
-              style={{ inset: 0, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(0.5px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: '90%', maxWidth: 400, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ position: 'relative', height: 120 }}>
-                  {!showMergedMessage && !dissolving && (
+            <div 
+              className="fixed z-50" 
+              onClick={handleCloseCommentBox}
+              style={{ 
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: viewportHeight,
+                backgroundColor: 'rgba(255,255,255,0.02)', 
+                backdropFilter: 'blur(0.5px)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center'
+              }}
+            >
+              <div 
+                style={{ 
+                  width: '90%', 
+                  maxWidth: 400, 
+                  textAlign: 'center',
+                  position: 'relative',
+                  height: 160
+                }} 
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Input Phase */}
+                {commentPhase === 'input' && (
+                  <>
                     <textarea 
                       value={commentText} 
                       onChange={(e) => setCommentText(e.target.value)} 
@@ -583,11 +698,8 @@
                       autoCorrect="off"
                       autoCapitalize="off"
                       style={{ 
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
                         width: '100%', 
-                        height: '100%', 
+                        height: 120, 
                         background: 'transparent', 
                         border: 'none', 
                         outline: 'none', 
@@ -599,60 +711,73 @@
                         padding: '20px 10px',
                         cursor: isMobile ? 'auto' : 'none', 
                         color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        '::placeholder': { color: isImageBright ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }
+                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)'
                       }} 
                     />
-                  )}
-                  {dissolving && (
-                    <div style={{ 
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '20px 10px'
-                    }}>
-                      <p style={{ 
-                        margin: 0, 
-                        fontSize: 16, 
-                        fontWeight: 300, 
-                        lineHeight: 1.6, 
-                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        opacity: dissolveOpacity, 
-                        filter: `blur(${(1-dissolveOpacity)*8}px)`, 
-                        transition: 'opacity 3s ease-out, filter 3s ease-out' 
-                      }}>
-                        {dissolveText}
-                      </p>
+                    <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <button 
+                        onClick={handleSubmitComment} 
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          padding: 8, 
+                          cursor: 'pointer', 
+                          color: isImageBright ? 'rgba(0,0,0,0.6)' : '#ffffff' 
+                        }}
+                      >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
+                        </svg>
+                      </button>
                     </div>
-                  )}
-                  {showMergedMessage && (
-                    <div style={{ 
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                  </>
+                )}
+
+                {/* Fadeout Phase - texto en la misma posición */}
+                {commentPhase === 'fadeout' && (
+                  <div style={{ 
+                    width: '100%',
+                    height: 120,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px 10px'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: 16, 
+                      fontWeight: 300, 
+                      lineHeight: 1.6, 
+                      textAlign: 'center',
+                      color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
+                      textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
+                      opacity: fadeOpacity, 
+                      filter: `blur(${(1 - fadeOpacity) * 8}px)`, 
+                      transition: 'opacity 3s ease-out, filter 3s ease-out' 
                     }}>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 300, color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)' }}>Words merged with image work</p>
-                    </div>
-                  )}
-                </div>
-                {!showMergedMessage && !dissolving && (
-                  <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button onClick={handleSubmitComment} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: '#ffffff' }}>
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
-                      </svg>
-                    </button>
+                      {savedText}
+                    </p>
+                  </div>
+                )}
+
+                {/* Merged Phase - misma posición, aparece instantáneo, desaparece instantáneo */}
+                {commentPhase === 'merged' && (
+                  <div style={{ 
+                    width: '100%',
+                    height: 120,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px 10px'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: 14, 
+                      fontWeight: 300, 
+                      color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)' 
+                    }}>
+                      Words merged with image work
+                    </p>
                   </div>
                 )}
               </div>
@@ -730,9 +855,13 @@
             </div>
           )}
 
+          {/* Screensaver */}
           {showScreensaver && (
-            <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
-              onClick={() => setShowScreensaver(false)}>
+            <div 
+              className="fixed inset-0 z-[200]" 
+              style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
+              onClick={() => setShowScreensaver(false)}
+            >
               <video
                 autoPlay
                 loop
@@ -760,4 +889,3 @@
   </script>
 </body>
 </html>
-
