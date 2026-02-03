@@ -652,10 +652,16 @@
 
           {showScreensaver && (
             <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(250,249,246,0.95)' }} onClick={() => setShowScreensaver(false)}>
-              <video autoPlay loop muted playsInline
-                style={{ position: 'absolute', left: screensaverPosition.x, top: screensaverPosition.y, width: '70%', height: 'auto', maxHeight: '70%', objectFit: 'contain' }}>
-                <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
-              </video>
+              <video 
+  autoPlay 
+  loop 
+  muted 
+  playsInline
+  webkit-playsinline="true"
+  ref={(el) => { if (el) el.play().catch(() => {}); }}
+  style={{ position: 'absolute', left: screensaverPosition.x, top: screensaverPosition.y, width: '70%', height: 'auto', maxHeight: '70%', objectFit: 'contain' }}>
+  <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
+</video>
             </div>
           )}
         </div>
