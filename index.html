@@ -15,7 +15,7 @@
     :root { 
       --accent-blue: #0b385f; 
       --text-dark: #1A1A1A;
-      --text-medium: #333333;
+      --text-medium: #222222;
       --bg-cream: #FAF9F6;
     }
     html, body {
@@ -39,11 +39,11 @@
     }
     
     .font-ui {
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.08em;
-      color: var(--text-medium);
-    }
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--text-medium);
+  }
     
     .font-body {
       font-family: 'Lora', serif;
@@ -167,27 +167,35 @@
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-      useEffect(() => {
-        const resetInactivity = () => {
-          if (showScreensaver) setShowScreensaver(false);
-          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-          inactivityTimer.current = setTimeout(() => {
-            const vw = window.innerWidth, vh = window.innerHeight;
-            setScreensaverPosition({
-              x: Math.random() * (vw * 0.3),
-              y: Math.random() * (vh * 0.3)
-            });
-            setShowScreensaver(true);
-          }, 15000);
-        };
-        resetInactivity();
-        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
-        events.forEach(event => window.addEventListener(event, resetInactivity));
-        return () => {
-          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-          events.forEach(event => window.removeEventListener(event, resetInactivity));
-        };
-      }, [showScreensaver]);
+     useEffect(() => {
+  const resetInactivity = () => {
+    if (showScreensaver) {
+      setShowScreensaver(false);
+      return;
+    }
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      setScreensaverPosition({
+        x: Math.random() * (vw * 0.3),
+        y: Math.random() * (vh * 0.3)
+      });
+      setShowScreensaver(true);
+    }, 15000);
+  };
+  
+  if (!showScreensaver) {
+    resetInactivity();
+  }
+  
+  const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+  events.forEach(event => window.addEventListener(event, resetInactivity));
+  
+  return () => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    events.forEach(event => window.removeEventListener(event, resetInactivity));
+  };
+}, [showScreensaver]);
 
       const initializePositions = useCallback(() => {
         if (!photos.length) return;
@@ -489,7 +497,7 @@
               
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
-                <h2 className="font-ui text-sm md:text-base transition-all"
+                <h2 className="font-ui transition-all" style={{ fontSize: isMobile ? 11 : 13 }}
                   style={{ color: isHovering('title') ? '#0b385f' : '#333333', opacity: textOpacity('title') }}>{projectTitle}</h2>
               </div>
 
@@ -515,7 +523,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all"
-                      style={{ fontSize: isMobile ? 11 : 12, color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                      style={{ fontSize: isMobile ? 11 : 13, color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                       Lend your words
                     </button>
                   </div>
