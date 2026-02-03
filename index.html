@@ -6,7 +6,7 @@
   <title>Silent Fragments</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -40,7 +40,7 @@
     
     .font-ui {
       font-family: 'Inter', sans-serif;
-      font-weight: 100;
+      font-weight: 400;
       letter-spacing: 0.08em;
       color: var(--text-medium);
     }
@@ -51,11 +51,8 @@
     }
     
     textarea::placeholder { 
-      color: rgba(255,255,255,0.6); 
+      color: rgba(255,255,255,0.5); 
       font-family: 'Lora', serif;
-    }
-    textarea.bright-bg::placeholder { 
-      color: rgba(0,0,0,0.4); 
     }
   </style>
 </head>
@@ -72,24 +69,19 @@
       const STORAGE_KEY = 'silentFragmentsComments';
       const MAX_COMMENTS = 500;
 
-      // Core states
       const [photos, setPhotos] = useState([]);
       const [loading, setLoading] = useState(true);
       const [showIntro, setShowIntro] = useState(true);
       const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
       const [randomOrder, setRandomOrder] = useState([]);
-      const [imageLoaded, setImageLoaded] = useState(false);
       const [isMobile, setIsMobile] = useState(false);
-      const [isImageBright, setIsImageBright] = useState(false);
 
-      // UI states
       const [showCommentBox, setShowCommentBox] = useState(false);
       const [showContactSheet, setShowContactSheet] = useState(false);
       const [showCommentsView, setShowCommentsView] = useState(false);
       const [hoveredElement, setHoveredElement] = useState(null);
       const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
-      // Comment states
       const [commentText, setCommentText] = useState('');
       const [dissolving, setDissolving] = useState(false);
       const [dissolveText, setDissolveText] = useState('');
@@ -98,7 +90,6 @@
       const [mergedMessageOpacity, setMergedMessageOpacity] = useState(0);
       const [photoComments, setPhotoComments] = useState({});
 
-      // Contact sheet states
       const [imagePositions, setImagePositions] = useState([]);
       const [draggingIndex, setDraggingIndex] = useState(null);
       const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -110,12 +101,8 @@
       const [screensaverPosition, setScreensaverPosition] = useState({ x: 0, y: 0 });
       const inactivityTimer = useRef(null);
 
-      // Swipe states
-      const [swipeStart, setSwipeStart] = useState(null);
-      const [swipeOffset, setSwipeOffset] = useState(0);
-      const [isSwipeTransitioning, setIsSwipeTransitioning] = useState(false);
+      const [swipeStartX, setSwipeStartX] = useState(null);
 
-      // Refs
       const longPressTimer = useRef(null);
       const isLongPress = useRef(false);
       const wasDragging = useRef(false);
@@ -124,16 +111,13 @@
       const initialPinchCenter = useRef({ x: 0, y: 0 });
       const initialImagePos = useRef({ x: 0, y: 0 });
       const lastClickTime = useRef(0);
-      const textareaRef = useRef(null);
       const commentBoxRef = useRef(null);
 
-      // Photo files
       const photoFiles = [
         'Untitled_250619.jpg', 'Untitled_241221.jpg', 'Untitiled_241208.jpg',
         'Untitiled_241115.jpg', 'Untitiled_240714.jpg'
       ];
 
-      // Initialize
       useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
         checkMobile();
@@ -166,9 +150,6 @@
         return () => clearTimeout(timer);
       }, []);
 
-      useEffect(() => { setImageLoaded(false); }, [currentPhotoIndex]);
-
-      // Load/save comments
       useEffect(() => {
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
@@ -180,78 +161,38 @@
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(photoComments)); } catch (e) {}
       }, [photoComments]);
 
-      // Brightness detection
       useEffect(() => {
-        if (!photos[randomOrder[currentPhotoIndex]]) return;
-        const currentPhoto = photos[randomOrder[currentPhotoIndex]];
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.src = currentPhoto.url;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = canvas.height = 50;
-          ctx.drawImage(img, 0, 0, 50, 50);
-          try {
-            const data = ctx.getImageData(0, 0, 50, 50).data;
-            let total = 0;
-            for (let i = 0; i < data.length; i += 4) {
-              total += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-            }
-            setIsImageBright(total / 2500 > 140);
-          } catch (e) { setIsImageBright(false); }
-        };
-      }, [currentPhotoIndex, photos, randomOrder]);
-
-      // Mouse tracking
-      useEffect(() => {
-        const handleMouseMove = (e) => {
-          setCursorPosition({ x: e.clientX, y: e.clientY });
-        };
+        const handleMouseMove = (e) => setCursorPosition({ x: e.clientX, y: e.clientY });
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-      // Screensaver - inactivity detection (15 seconds)
       useEffect(() => {
         const resetInactivity = () => {
-          if (showScreensaver) {
-            setShowScreensaver(false);
-          }
-          if (inactivityTimer.current) {
-            clearTimeout(inactivityTimer.current);
-          }
+          if (showScreensaver) setShowScreensaver(false);
+          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
           inactivityTimer.current = setTimeout(() => {
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            const videoWidth = vw * 0.7;
-            const videoHeight = vh * 0.7;
+            const vw = window.innerWidth, vh = window.innerHeight;
             setScreensaverPosition({
-              x: Math.random() * (vw - videoWidth),
-              y: Math.random() * (vh - videoHeight)
+              x: Math.random() * (vw * 0.3),
+              y: Math.random() * (vh * 0.3)
             });
             setShowScreensaver(true);
           }, 15000);
         };
-
         resetInactivity();
-        
         const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
         events.forEach(event => window.addEventListener(event, resetInactivity));
-        
         return () => {
           if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
           events.forEach(event => window.removeEventListener(event, resetInactivity));
         };
       }, [showScreensaver]);
 
-      // Contact sheet positions
       const initializePositions = useCallback(() => {
         if (!photos.length) return;
         const isMobileView = window.innerWidth <= 768;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        
+        const vw = window.innerWidth, vh = window.innerHeight;
         const zones = isMobileView ? [
           { x: 0.08, y: 0.08 }, { x: 0.55, y: 0.12 },
           { x: 0.12, y: 0.42 }, { x: 0.52, y: 0.48 },
@@ -261,23 +202,16 @@
           { x: 0.08, y: 0.45 }, { x: 0.58, y: 0.50 },
           { x: 0.30, y: 0.28 }
         ];
-        
         const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
-        
         const positions = photos.map((_, index) => {
           const zone = shuffledZones[index % shuffledZones.length];
-          const randX = (Math.random() - 0.5) * 0.1;
-          const randY = (Math.random() - 0.5) * 0.1;
           const baseWidth = isMobileView ? 0.38 : 0.26;
-          const randWidth = (Math.random() - 0.5) * 0.08;
-          
           return {
-            x: (zone.x + randX) * vw,
-            y: (zone.y + randY) * vh,
-            width: (baseWidth + randWidth) * vw
+            x: (zone.x + (Math.random() - 0.5) * 0.1) * vw,
+            y: (zone.y + (Math.random() - 0.5) * 0.1) * vh,
+            width: (baseWidth + (Math.random() - 0.5) * 0.08) * vw
           };
         });
-        
         setImagePositions(positions);
         setZIndexOrder([...Array(photos.length).keys()].sort(() => Math.random() - 0.5));
       }, [photos]);
@@ -286,7 +220,6 @@
         if (photos.length > 0 && showContactSheet) initializePositions();
       }, [photos, showContactSheet, initializePositions]);
 
-      // Navigation handlers
       const handleNextPhoto = useCallback(() => {
         if (!randomOrder.length) return;
         setCurrentPhotoIndex(prev => (prev + 1) % randomOrder.length);
@@ -297,84 +230,25 @@
         setCurrentPhotoIndex(prev => (prev - 1 + randomOrder.length) % randomOrder.length);
       }, [randomOrder.length]);
 
-      // Swipe handlers for main photo view
-      const handleSwipeStart = useCallback((clientX) => {
-        if (showCommentBox || showContactSheet || showCommentsView) return;
-        setSwipeStart(clientX);
-        setSwipeOffset(0);
-      }, [showCommentBox, showContactSheet, showCommentsView]);
+      const handlePhotoClick = useCallback(() => {
+        if (!isMobile) handleNextPhoto();
+      }, [isMobile, handleNextPhoto]);
 
-      const handleSwipeMove = useCallback((clientX) => {
-        if (swipeStart === null || isSwipeTransitioning) return;
-        const diff = clientX - swipeStart;
-        setSwipeOffset(diff);
-      }, [swipeStart, isSwipeTransitioning]);
-
-      const handleSwipeEnd = useCallback(() => {
-        if (swipeStart === null) return;
-        
-        const threshold = window.innerWidth * 0.15;
-        
-        if (Math.abs(swipeOffset) > threshold) {
-          setIsSwipeTransitioning(true);
-          const direction = swipeOffset > 0 ? -1 : 1;
-          
-          if (direction > 0) {
-            handleNextPhoto();
-          } else {
-            handlePrevPhoto();
-          }
-          
-          setTimeout(() => {
-            setSwipeOffset(0);
-            setIsSwipeTransitioning(false);
-          }, 300);
-        } else {
-          setSwipeOffset(0);
-        }
-        
-        setSwipeStart(null);
-      }, [swipeStart, swipeOffset, handleNextPhoto, handlePrevPhoto]);
-
-      // Mouse swipe (desktop)
-      const handleMouseDown = useCallback((e) => {
-        if (e.target.closest('button') || e.target.closest('textarea')) return;
-        handleSwipeStart(e.clientX);
-      }, [handleSwipeStart]);
-
-      const handleMouseMove = useCallback((e) => {
-        handleSwipeMove(e.clientX);
-      }, [handleSwipeMove]);
-
-      const handleMouseUp = useCallback(() => {
-        handleSwipeEnd();
-      }, [handleSwipeEnd]);
-
-      // Touch swipe (mobile)
       const handleTouchStartSwipe = useCallback((e) => {
+        if (!isMobile || showCommentBox || showContactSheet || showCommentsView) return;
         if (e.target.closest('button') || e.target.closest('textarea')) return;
-        if (e.touches.length === 1) {
-          handleSwipeStart(e.touches[0].clientX);
-        }
-      }, [handleSwipeStart]);
+        if (e.touches.length === 1) setSwipeStartX(e.touches[0].clientX);
+      }, [isMobile, showCommentBox, showContactSheet, showCommentsView]);
 
-      const handleTouchMoveSwipe = useCallback((e) => {
-        if (e.touches.length === 1) {
-          handleSwipeMove(e.touches[0].clientX);
+      const handleTouchEndSwipe = useCallback((e) => {
+        if (!isMobile || swipeStartX === null) return;
+        const diff = e.changedTouches[0].clientX - swipeStartX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) handlePrevPhoto();
+          else handleNextPhoto();
         }
-      }, [handleSwipeMove]);
-
-      const handleTouchEndSwipe = useCallback(() => {
-        handleSwipeEnd();
-      }, [handleSwipeEnd]);
-
-      // Image tap opens comment box on mobile
-      const handleImageTap = useCallback((e) => {
-        if (isMobile) {
-          e.stopPropagation();
-          setShowCommentBox(true);
-        }
-      }, [isMobile]);
+        setSwipeStartX(null);
+      }, [isMobile, swipeStartX, handleNextPhoto, handlePrevPhoto]);
 
       const handleTitleClick = (e) => {
         e.stopPropagation();
@@ -388,9 +262,9 @@
         const currentPhoto = photos[randomOrder[currentPhotoIndex]];
         
         setDissolveText(textToSave);
-        setCommentText('');
-        setDissolving(true);
         setDissolveOpacity(1);
+        setDissolving(true);
+        setCommentText('');
 
         setPhotoComments(prev => {
           const curr = prev[currentPhoto.id] || [];
@@ -398,16 +272,13 @@
           return { ...prev, [currentPhoto.id]: newComments };
         });
 
-        // 2 second fade out for text
-        requestAnimationFrame(() => setDissolveOpacity(0));
+        setTimeout(() => setDissolveOpacity(0), 50);
         
         setTimeout(() => {
           setDissolving(false);
           setDissolveText('');
           setShowMergedMessage(true);
           setMergedMessageOpacity(1);
-          
-          // 2 second display then fade out merged message
           setTimeout(() => {
             setMergedMessageOpacity(0);
             setTimeout(() => {
@@ -418,7 +289,6 @@
         }, 2000);
       };
 
-      // Close comment box when clicking outside
       const handleCommentBoxOutsideClick = useCallback((e) => {
         if (commentBoxRef.current && !commentBoxRef.current.contains(e.target)) {
           if (!dissolving && !showMergedMessage) {
@@ -428,19 +298,14 @@
         }
       }, [dissolving, showMergedMessage]);
 
-      // Contact sheet - Desktop handlers
       const handleImageMouseDown = (e, index) => {
         e.preventDefault();
         e.stopPropagation();
         lastClickTime.current = Date.now();
-        
         longPressTimer.current = setTimeout(() => {
           isLongPress.current = true;
           wasDragging.current = true;
-          setDragOffset({
-            x: e.clientX - imagePositions[index].x,
-            y: e.clientY - imagePositions[index].y
-          });
+          setDragOffset({ x: e.clientX - imagePositions[index].x, y: e.clientY - imagePositions[index].y });
           setDraggingIndex(index);
           setZIndexOrder(prev => [...prev.filter(i => i !== index), index]);
         }, 150);
@@ -448,14 +313,11 @@
 
       const handleImageMouseUp = (e, index) => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
-        
-        const clickDuration = Date.now() - lastClickTime.current;
-        
         if (draggingIndex === index) {
           e.stopPropagation();
           setDraggingIndex(null);
           setTimeout(() => { wasDragging.current = false; isLongPress.current = false; }, 50);
-        } else if (clickDuration < 200 && !isLongPress.current && !wasDragging.current) {
+        } else if (Date.now() - lastClickTime.current < 200 && !isLongPress.current && !wasDragging.current) {
           setCurrentPhotoIndex(randomOrder.indexOf(index));
           setShowContactSheet(false);
         }
@@ -463,22 +325,15 @@
 
       useEffect(() => {
         if (draggingIndex === null) return;
-        
         const handleMove = (e) => {
           const newPositions = [...imagePositions];
-          newPositions[draggingIndex] = {
-            ...newPositions[draggingIndex],
-            x: e.clientX - dragOffset.x,
-            y: e.clientY - dragOffset.y
-          };
+          newPositions[draggingIndex] = { ...newPositions[draggingIndex], x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y };
           setImagePositions(newPositions);
         };
-        
         const handleUp = () => {
           setDraggingIndex(null);
           setTimeout(() => { wasDragging.current = false; isLongPress.current = false; }, 50);
         };
-
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('mouseup', handleUp);
         return () => {
@@ -487,20 +342,16 @@
         };
       }, [draggingIndex, dragOffset, imagePositions]);
 
-      // Contact sheet - Mobile handlers with free zoom
       const handleImageTouchStart = (e, index) => {
         if (activeImageIndex !== null && activeImageIndex !== index) return;
-        
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
         
         if (e.touches.length === 2 && (activeImageIndex === null || activeImageIndex === index)) {
           e.preventDefault();
           const t1 = e.touches[0], t2 = e.touches[1];
-          const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-          const cx = (t1.clientX + t2.clientX) / 2, cy = (t1.clientY + t2.clientY) / 2;
-          initialPinchDistance.current = dist;
+          initialPinchDistance.current = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           initialImageWidth.current = imagePositions[index]?.width || 100;
-          initialPinchCenter.current = { x: cx, y: cy };
+          initialPinchCenter.current = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
           initialImagePos.current = { x: imagePositions[index]?.x || 0, y: imagePositions[index]?.y || 0 };
           setPinchingIndex(index);
           setActiveImageIndex(index);
@@ -530,7 +381,6 @@
         if (e.touches.length === 2) {
           e.preventDefault();
           if (longPressTimer.current) clearTimeout(longPressTimer.current);
-          
           const targetIndex = activeImageIndex !== null ? activeImageIndex : index;
           setDraggingIndex(null);
           
@@ -548,16 +398,13 @@
             setZIndexOrder(prev => [...prev.filter(i => i !== targetIndex), targetIndex]);
           } else {
             const scale = dist / initialPinchDistance.current;
-            // Free zoom - no upper limit, image can exceed screen bounds
             const newWidth = Math.max(60, initialImageWidth.current * scale);
-            const deltaX = cx - initialPinchCenter.current.x;
-            const deltaY = cy - initialPinchCenter.current.y;
             const newPositions = [...imagePositions];
             newPositions[targetIndex] = { 
               ...newPositions[targetIndex], 
               width: newWidth, 
-              x: initialImagePos.current.x + deltaX, 
-              y: initialImagePos.current.y + deltaY 
+              x: initialImagePos.current.x + (cx - initialPinchCenter.current.x), 
+              y: initialImagePos.current.y + (cy - initialPinchCenter.current.y) 
             };
             setImagePositions(newPositions);
           }
@@ -577,13 +424,11 @@
 
       const handleImageTouchEnd = (e, index) => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
-        
         if (activeImageIndex !== null && activeImageIndex !== index) return;
         
         if (pinchingIndex === index) {
           setPinchingIndex(null);
           setActiveImageIndex(null);
-          initialPinchDistance.current = 0;
           return;
         }
         
@@ -603,11 +448,9 @@
           setCurrentPhotoIndex(randomOrder.indexOf(index));
           setShowContactSheet(false);
         }
-        
         setActiveImageIndex(null);
       };
 
-      // Render
       if (loading || !photos.length || !randomOrder.length) {
         return <div className="w-screen h-screen flex items-center justify-center fixed inset-0" style={{ backgroundColor: '#FAF9F6' }}>
           <p className="font-loader text-sm">{loading ? 'Loading...' : 'No photos found'}</p>
@@ -619,16 +462,10 @@
       const textColor = (el) => isHovering(el) ? '#0b385f' : '#333333';
       const textOpacity = (el) => isHovering(el) ? 1 : 0.7;
 
-      // Custom cursor component
       const CustomCursor = ({ isClickable }) => (
         <div className="fixed pointer-events-none" style={{
-          left: cursorPosition.x, 
-          top: cursorPosition.y, 
-          transform: 'translate(-50%, -50%)',
-          width: 12, 
-          height: 12, 
-          borderRadius: '50%', 
-          zIndex: 10000,
+          left: cursorPosition.x, top: cursorPosition.y, transform: 'translate(-50%, -50%)',
+          width: 12, height: 12, borderRadius: '50%', zIndex: 10000,
           backgroundColor: isClickable ? '#0b385f' : 'white',
           border: isClickable ? 'none' : '1.5px solid #1A1A1A',
           boxShadow: isClickable ? 'none' : '0 1px 4px rgba(0,0,0,0.2)',
@@ -637,79 +474,32 @@
       );
 
       return (
-        <div 
-          className="w-screen relative" 
-          style={{ 
-            cursor: 'none', 
-            overflow: 'hidden', 
-            position: 'fixed', 
-            inset: 0, 
-            touchAction: 'pan-y',
-            backgroundColor: '#FAF9F6'
-          }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStartSwipe}
-          onTouchMove={handleTouchMoveSwipe}
-          onTouchEnd={handleTouchEndSwipe}
-        >
+        <div className="w-screen relative" style={{ cursor: 'none', overflow: 'hidden', position: 'fixed', inset: 0, touchAction: 'pan-y', backgroundColor: '#FAF9F6' }}
+          onTouchStart={handleTouchStartSwipe} onTouchEnd={handleTouchEndSwipe}>
           
           {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
 
-          {/* Intro screen */}
           <div className={`absolute inset-0 flex items-center justify-center z-50 ${showIntro ? 'opacity-100' : 'opacity-0'}`}
             style={{ transition: 'opacity 2s ease-out', pointerEvents: showIntro ? 'auto' : 'none', backgroundColor: '#FAF9F6' }}>
             <h1 className="font-loader text-2xl md:text-4xl px-4 text-center">{projectTitle}</h1>
           </div>
 
           {!showIntro && currentPhoto && (
-            <div 
-              className="w-full flex flex-col items-center justify-between" 
-              style={{ 
-                height: '100%', 
-                padding: isMobile ? '12px' : '24px', 
-                overflow: 'hidden',
-                transform: `translateX(${swipeOffset}px)`,
-                transition: isSwipeTransitioning ? 'transform 0.3s ease-out' : 'none'
-              }}
-            >
+            <div className="w-full flex flex-col items-center justify-between" style={{ height: '100%', padding: isMobile ? '12px' : '24px', overflow: 'hidden' }}>
               
-              {/* Header */}
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
                 <h2 className="font-ui text-sm md:text-base transition-all"
                   style={{ color: isHovering('title') ? '#0b385f' : '#333333', opacity: textOpacity('title') }}>{projectTitle}</h2>
               </div>
 
-              {/* Main photo */}
-              <div 
-                className="flex items-center justify-center w-full"
-                style={{ 
-                  flex: '1 1 auto', 
-                  maxWidth: isMobile ? '100%' : '42rem', 
-                  minHeight: 0, 
-                  overflow: 'hidden', 
-                  padding: isMobile ? '8px 0' : '16px 0',
-                  cursor: isMobile ? 'pointer' : 'none'
-                }}
-                onClick={handleImageTap}
-              >
-                <img 
-                  src={currentPhoto.url} 
-                  alt={currentPhoto.title} 
-                  className="object-contain"
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '100%', 
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
-                    touchAction: 'pan-x pan-y'
-                  }} 
-                />
+              <div className="flex items-center justify-center w-full"
+                style={{ flex: '1 1 auto', maxWidth: isMobile ? '100%' : '42rem', minHeight: 0, overflow: 'hidden', padding: isMobile ? '8px 0' : '16px 0', cursor: isMobile ? 'default' : 'none' }}
+                onClick={handlePhotoClick} onMouseEnter={() => !isMobile && setHoveredElement('photo')} onMouseLeave={() => !isMobile && setHoveredElement(null)}>
+                <img src={currentPhoto.url} alt={currentPhoto.title} className="object-contain"
+                  style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', touchAction: 'pan-x pan-y' }} />
               </div>
 
-              {/* Footer */}
               <div className="w-full flex-shrink-0" style={{ paddingTop: isMobile ? '8px' : '12px', position: 'relative', zIndex: 5 }}>
                 <div className="flex items-center w-full">
                   <div className="flex-1 flex justify-start">
@@ -725,13 +515,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all"
-                      style={{ 
-                        fontSize: isMobile ? 11 : 12, 
-                        color: textColor('share'), 
-                        opacity: textOpacity('share'),
-                        textDecoration: 'underline',
-                        textUnderlineOffset: '3px'
-                      }}>
+                      style={{ fontSize: isMobile ? 11 : 12, color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                       Lend your words
                     </button>
                   </div>
@@ -739,18 +523,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(true); }}
                       onMouseEnter={() => setHoveredElement('photoTitle')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all text-right"
-                      style={{ 
-                        fontSize: isMobile ? 11 : 12, 
-                        color: textColor('photoTitle'), 
-                        opacity: textOpacity('photoTitle'), 
-                        background: 'none', 
-                        border: 'none', 
-                        padding: '4px', 
-                        margin: '-4px', 
-                        pointerEvents: 'auto', 
-                        position: 'relative', 
-                        zIndex: 10 
-                      }}>
+                      style={{ fontSize: isMobile ? 11 : 12, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px' }}>
                       {currentPhoto.date}
                     </button>
                   </div>
@@ -759,127 +532,33 @@
             </div>
           )}
 
-          {/* Comment box overlay */}
           {showCommentBox && (
-            <div 
-              className="fixed z-50" 
-              onClick={handleCommentBoxOutsideClick}
-              style={{ 
-                inset: 0, 
-                backgroundColor: 'rgba(250,249,246,0.02)', 
-                backdropFilter: 'blur(0.5px)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center' 
-              }}
-            >
-              <div 
-                ref={commentBoxRef}
-                style={{ 
-                  width: '90%', 
-                  maxWidth: isMobile ? '100%' : '42rem',
-                  textAlign: 'center',
-                  padding: '0 20px'
-                }} 
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div style={{ position: 'relative', minHeight: 150, maxHeight: '60vh' }}>
+            <div className="fixed z-50" onClick={handleCommentBoxOutsideClick}
+              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div ref={commentBoxRef} style={{ width: '90%', maxWidth: isMobile ? '100%' : '42rem', textAlign: 'center', padding: '0 20px', minHeight: 200 }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ position: 'relative', minHeight: 150, maxHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {!showMergedMessage && !dissolving && (
-                    <textarea 
-                      ref={textareaRef}
-                      value={commentText} 
-                      onChange={(e) => setCommentText(e.target.value)} 
-                      autoFocus
+                    <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
                       placeholder="write down what you're thinking..."
-                      className={`font-body ${isImageBright ? 'bright-bg' : ''}`}
-                      data-gramm="false"
-                      data-gramm_editor="false"
-                      data-enable-grammarly="false"
-                      spellCheck="false"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      style={{ 
-                        width: '100%', 
-                        minHeight: 150,
-                        maxHeight: '50vh',
-                        background: 'transparent', 
-                        border: 'none', 
-                        outline: 'none', 
-                        resize: 'none', 
-                        textAlign: 'center', 
-                        fontSize: 16, 
-                        fontWeight: 400, 
-                        lineHeight: 1.8,
-                        padding: '20px 10px',
-                        cursor: isMobile ? 'auto' : 'none', 
-                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        overflow: 'auto'
-                      }} 
-                    />
+                      className="font-body"
+                      spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
+                      style={{ width: '100%', minHeight: 150, maxHeight: '50vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 400, lineHeight: 1.8, padding: '20px 10px', cursor: isMobile ? 'auto' : 'none', color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', overflow: 'auto', caretColor: '#ffffff' }} />
                   )}
                   {dissolving && (
-                    <div style={{ 
-                      width: '100%',
-                      minHeight: 150,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '20px 10px'
-                    }}>
-                      <p className="font-body" style={{ 
-                        margin: 0, 
-                        fontSize: 16, 
-                        fontWeight: 400, 
-                        lineHeight: 1.8, 
-                        color: isImageBright ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)', 
-                        textShadow: isImageBright ? 'none' : '0 1px 3px rgba(0,0,0,0.3)',
-                        opacity: dissolveOpacity, 
-                        filter: `blur(${(1-dissolveOpacity)*8}px)`, 
-                        transition: 'opacity 2s ease-out, filter 2s ease-out',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                      }}>
-                        {dissolveText}
-                      </p>
-                    </div>
+                    <p className="font-body" style={{ margin: 0, fontSize: 16, fontWeight: 400, lineHeight: 1.8, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2s ease-out, filter 2s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: '20px 10px' }}>
+                      {dissolveText}
+                    </p>
                   )}
                   {showMergedMessage && (
-                    <div style={{ 
-                      width: '100%',
-                      minHeight: 150,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <p className="font-ui" style={{ 
-                        margin: 0, 
-                        fontSize: 14, 
-                        color: isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.85)',
-                        opacity: mergedMessageOpacity,
-                        transition: 'opacity 0.5s ease-out'
-                      }}>
-                        Your trace forms the image
-                      </p>
-                    </div>
+                    <p className="font-body" style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
+                      Your trace forms the image
+                    </p>
                   )}
                 </div>
                 {!showMergedMessage && !dissolving && (
                   <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <button 
-                      onClick={handleSubmitComment} 
-                      onMouseEnter={() => setHoveredElement('submit')} 
-                      onMouseLeave={() => setHoveredElement(null)}
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        padding: 8, 
-                        cursor: 'pointer', 
-                        color: isHovering('submit') ? '#0b385f' : (isImageBright ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'),
-                        transition: 'color 0.2s'
-                      }}
-                    >
+                    <button onClick={handleSubmitComment} onMouseEnter={() => setHoveredElement('submit')} onMouseLeave={() => setHoveredElement(null)}
+                      style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: isHovering('submit') ? '#0b385f' : 'rgba(255,255,255,0.8)', transition: 'color 0.2s' }}>
                       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
                       </svg>
@@ -890,13 +569,10 @@
             </div>
           )}
 
-          {/* Contact sheet */}
           {showContactSheet && (
             <div className="fixed inset-0 z-50" style={{ overflow: 'hidden', backgroundColor: '#FAF9F6' }}
               onClick={() => { if (draggingIndex === null && !isLongPress.current) setShowContactSheet(false); }}>
-              
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null || hoveredThumbnail !== null} />}
-              
               <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(false); }}
                 onMouseEnter={() => setHoveredElement('closeContact')} onMouseLeave={() => setHoveredElement(null)}
                 className="absolute top-4 right-4 z-[60] transition-all" 
@@ -925,8 +601,7 @@
                       zIndex: isDragging || pinchingIndex === index ? 100 : zIndex,
                       transition: isDragging || pinchingIndex === index ? 'none' : 'filter 0.3s, opacity 0.3s',
                       transform: isDragging ? 'scale(1.05)' : 'scale(1)',
-                      cursor: isMobile ? 'default' : 'grab', 
-                      touchAction: 'none'
+                      cursor: isMobile ? 'default' : 'grab', touchAction: 'none'
                     }}
                       onMouseDown={(e) => !isMobile && handleImageMouseDown(e, index)}
                       onMouseUp={(e) => !isMobile && handleImageMouseUp(e, index)}
@@ -944,7 +619,6 @@
             </div>
           )}
 
-          {/* Comments view */}
           {showCommentsView && currentPhoto && (
             <div className="fixed inset-0 z-50" style={{ overflow: 'hidden', cursor: isMobile ? 'auto' : 'none', backgroundColor: '#FAF9F6' }}
               onClick={() => setShowCommentsView(false)}>
@@ -968,25 +642,10 @@
             </div>
           )}
 
-          {/* Screensaver */}
           {showScreensaver && (
-            <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(250,249,246,0.95)' }}
-              onClick={() => setShowScreensaver(false)}>
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{
-                  position: 'absolute',
-                  left: screensaverPosition.x,
-                  top: screensaverPosition.y,
-                  width: '70%',
-                  height: 'auto',
-                  maxHeight: '70%',
-                  objectFit: 'contain'
-                }}
-              >
+            <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(250,249,246,0.95)' }} onClick={() => setShowScreensaver(false)}>
+              <video autoPlay loop muted playsInline
+                style={{ position: 'absolute', left: screensaverPosition.x, top: screensaverPosition.y, width: '70%', height: 'auto', maxHeight: '70%', objectFit: 'contain' }}>
                 <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
               </video>
             </div>
