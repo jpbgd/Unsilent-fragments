@@ -258,14 +258,9 @@
 
       const handlePhotoTap = useCallback(() => {
         if (isMobile && !showCommentBox && !showContactSheet && !showCommentsView) {
-          // If zoomed in, tap resets zoom instead of opening comment box
-          if (mainPhotoZoom.scale > 1) {
-            setMainPhotoZoom({ scale: 1, x: 0, y: 0 });
-            return;
-          }
           setShowCommentBox(true);
         }
-      }, [isMobile, showCommentBox, showContactSheet, showCommentsView, mainPhotoZoom.scale]);
+      }, [isMobile, showCommentBox, showContactSheet, showCommentsView]);
 
       const handleTouchStartSwipe = useCallback((e) => {
         if (!isMobile || showCommentBox || showContactSheet || showCommentsView) return;
@@ -294,10 +289,7 @@
         if (!isMobile) return;
         if (isZooming) {
           setIsZooming(false);
-          // Only reset if user intentionally pinched back to ~1x
-          if (mainPhotoZoom.scale < 1.05) {
-            setMainPhotoZoom({ scale: 1, x: 0, y: 0 });
-          }
+          setMainPhotoZoom({ scale: 1, x: 0, y: 0 });
           return;
         }
         if (swipeStartX === null) return;
