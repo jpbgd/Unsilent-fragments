@@ -571,7 +571,7 @@
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all"
                       style={{ fontSize: isMobile ? '0.6875rem' : '0.75rem', color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textDecorationThickness: '0.5px', textUnderlineOffset: '3px' }}>
-                      Lend your words
+                      Give it words
                     </button>
                   </div>
                   <div className="flex-1 flex justify-end">
@@ -594,7 +594,7 @@
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {!showMergedMessage && !dissolving && (
                     <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
-                      placeholder="write down what you're thinking..."
+                      placeholder="The image finds its voice through your words. A memory, a feeling, or anything it evokes in you..."
                       className="font-body"
                       spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
                       data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"
@@ -607,7 +607,7 @@
                   )}
                   {showMergedMessage && (
                     <p className="font-body" style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
-                      Your trace forms the image
+                      Gracias. The image speaks through you now. 
                     </p>
                   )}
                 </div>
