@@ -87,6 +87,7 @@
       const [mainPhotoZoom, setMainPhotoZoom] = useState({ scale: 1, x: 0, y: 0 });
       const [isZooming, setIsZooming] = useState(false);
       const mainPinchStart = useRef({ distance: 0, scale: 1, x: 0, y: 0 });
+      const justFinishedZooming = useRef(false);
 
       const [showCommentBox, setShowCommentBox] = useState(false);
       const [showContactSheet, setShowContactSheet] = useState(false);
@@ -257,6 +258,7 @@
       }, [isMobile, handleNextPhoto]);
 
       const handlePhotoTap = useCallback(() => {
+        if (justFinishedZooming.current) return;
         if (isMobile && !showCommentBox && !showContactSheet && !showCommentsView) {
           setShowCommentBox(true);
         }
@@ -290,6 +292,8 @@
         if (isZooming) {
           setIsZooming(false);
           setMainPhotoZoom({ scale: 1, x: 0, y: 0 });
+          justFinishedZooming.current = true;
+          setTimeout(() => { justFinishedZooming.current = false; }, 100);
           return;
         }
         if (swipeStartX === null) return;
