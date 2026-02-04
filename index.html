@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Silent Fragments</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +22,9 @@
       margin: 0; padding: 0; overflow: hidden; position: fixed;
       width: 100%; height: 100%; background: var(--bg-cream);
       -webkit-user-select: none; -moz-user-select: none; user-select: none;
+    }
+    @supports (height: 100dvh) {
+      html, body { height: 100dvh; }
     }
     body { cursor: none; }
     * { cursor: none !important; box-sizing: border-box; }
@@ -506,7 +509,7 @@
           </div>
 
           {!showIntro && currentPhoto && (
-            <div className="w-full flex flex-col items-center justify-between" style={{ height: '100%', padding: pagePadding, overflow: 'hidden' }}>
+            <div className="w-full flex flex-col items-center justify-between" style={{ height: isMobile ? '100dvh' : '100%', padding: pagePadding, overflow: 'hidden', position: isMobile ? 'fixed' : 'relative', inset: isMobile ? 0 : 'auto' }}>
               
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
