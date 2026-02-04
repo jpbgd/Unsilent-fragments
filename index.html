@@ -14,8 +14,8 @@
   <style>
     :root { 
       --accent-blue: #0b385f; 
-      --text-dark: #222222;
-      --text-medium: #222222;
+      --text-dark: #141414;
+      --text-medium: #141414;
       --bg-cream: #FAF9F6;
     }
     html, body {
@@ -51,8 +51,9 @@
     }
     
     textarea::placeholder { 
-      color: rgba(255,255,255,0.7); 
+      color: #FFFFFF; 
       font-family: 'Lora', serif;
+      opacity: 1;
     }
   </style>
 </head>
@@ -473,7 +474,7 @@
 
       const currentPhoto = photos[randomOrder[currentPhotoIndex]];
       const isHovering = (el) => hoveredElement === el;
-      const textColor = (el) => isHovering(el) ? '#0b385f' : '#222222';
+      const textColor = (el) => isHovering(el) ? '#0b385f' : '#141414';
       const textOpacity = (el) => isHovering(el) ? 1 : 0.7;
 
       const CustomCursor = ({ isClickable }) => (
@@ -497,7 +498,7 @@
 
           <div className={`absolute inset-0 flex items-center justify-center z-50 ${showIntro ? 'opacity-100' : 'opacity-0'}`}
             style={{ transition: 'opacity 2s ease-out', pointerEvents: showIntro ? 'auto' : 'none', backgroundColor: '#FAF9F6' }}>
-            <h1 className="font-loader text-2xl md:text-4xl px-4 text-center" style={{ color: '#222222' }}>{projectTitle}</h1>
+            <h1 className="font-loader text-2xl md:text-4xl px-4 text-center" style={{ color: '#141414' }}>{projectTitle}</h1>
           </div>
 
           {!showIntro && currentPhoto && (
@@ -506,7 +507,7 @@
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
                 <h2 className="font-ui transition-all"
-                  style={{ fontSize: isMobile ? 11 : 13, color: isHovering('title') ? '#0b385f' : '#222222', opacity: textOpacity('title') }}>{projectTitle}</h2>
+                  style={{ fontSize: isMobile ? 13 : 15, color: isHovering('title') ? '#0b385f' : '#141414', opacity: textOpacity('title') }}>{projectTitle}</h2>
               </div>
 
               <div className="flex items-center justify-center w-full"
@@ -522,7 +523,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
                       onMouseEnter={() => setHoveredElement('contact')} onMouseLeave={() => setHoveredElement(null)}
                       className="transition-all" style={{ color: textColor('contact'), opacity: textOpacity('contact') }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/>
                       </svg>
                     </button>
@@ -531,7 +532,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentBox(true); }}
                       onMouseEnter={() => setHoveredElement('share')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all"
-                      style={{ fontSize: isMobile ? 11 : 13, color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                      style={{ fontSize: isMobile ? 13 : 15, color: textColor('share'), opacity: textOpacity('share'), textDecoration: 'underline', textDecorationThickness: '0.5px', textUnderlineOffset: '3px' }}>
                       Lend your words
                     </button>
                   </div>
@@ -539,7 +540,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(true); }}
                       onMouseEnter={() => setHoveredElement('photoTitle')} onMouseLeave={() => setHoveredElement(null)}
                       className="font-ui transition-all text-right"
-                      style={{ fontSize: isMobile ? 11 : 12, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px' }}>
+                      style={{ fontSize: isMobile ? 13 : 14, color: textColor('photoTitle'), opacity: textOpacity('photoTitle'), background: 'none', border: 'none', padding: '4px', margin: '-4px' }}>
                       {currentPhoto.date}
                     </button>
                   </div>
@@ -550,7 +551,7 @@
 
           {showCommentBox && (
             <div className="fixed z-50" onClick={handleCommentBoxOutsideClick}
-              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'center', paddingTop: isMobile ? '30vh' : 0 }}>
               <div ref={commentBoxRef} style={{ width: '90%', maxWidth: isMobile ? '100%' : '42rem', textAlign: 'center', padding: '0 20px', minHeight: 200 }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ position: 'relative', minHeight: 150, maxHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {!showMergedMessage && !dissolving && (
@@ -558,7 +559,8 @@
                       placeholder="write down what you're thinking..."
                       className="font-body"
                       spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
-                      style={{ width: '100%', minHeight: 150, maxHeight: '50vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 400, lineHeight: 1.8, padding: '20px 10px', cursor: isMobile ? 'auto' : 'none', color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', overflow: 'auto', caretColor: '#ffffff' }} />
+                      data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"
+                      style={{ width: '100%', minHeight: 150, maxHeight: '50vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 400, lineHeight: 1.8, padding: '20px 10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 3px rgba(0,0,0,0.5)', overflow: 'auto', caretColor: '#ffffff' }} />
                   )}
                   {dissolving && (
                     <p className="font-body" style={{ margin: 0, fontSize: 16, fontWeight: 400, lineHeight: 1.8, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2s ease-out, filter 2s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: '20px 10px' }}>
@@ -574,7 +576,7 @@
                 {!showMergedMessage && !dissolving && (
                   <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <button onClick={handleSubmitComment} onMouseEnter={() => setHoveredElement('submit')} onMouseLeave={() => setHoveredElement(null)}
-                      style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: isHovering('submit') ? '#0b385f' : 'rgba(255,255,255,0.8)', transition: 'color 0.2s' }}>
+                      style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: !isMobile && isHovering('submit') ? '#0b385f' : 'rgba(255,255,255,0.9)', transition: 'color 0.2s' }}>
                       <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
                       </svg>
@@ -591,14 +593,14 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null || hoveredThumbnail !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(false); }}
                 onMouseEnter={() => setHoveredElement('closeContact')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute top-4 right-4 z-[60] transition-all" 
-                style={{ color: isHovering('closeContact') ? '#0b385f' : '#222222', opacity: isHovering('closeContact') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" 
+                style={{ top: pagePadding, right: pagePadding, color: isHovering('closeContact') ? '#0b385f' : '#141414', opacity: isHovering('closeContact') ? 1 : 0.5 }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <p className="font-ui absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[60]"
-                style={{ pointerEvents: 'none', fontSize: isMobile ? 11 : 12, opacity: 0.7, color: '#222222' }}>
+              <p className="font-ui absolute left-1/2 transform -translate-x-1/2 z-[60]"
+                style={{ bottom: pagePadding, pointerEvents: 'none', fontSize: isMobile ? 13 : 14, opacity: 0.7, color: '#141414' }}>
                 Reorder freely
               </p>
               <div className="w-full h-full relative">
@@ -613,7 +615,7 @@
                     <div key={photo.id} className="absolute" style={{
                       left: pos.x, top: pos.y, width: pos.width,
                       filter: isOtherHovered && !isDragging ? 'blur(0.5px)' : 'none',
-                      opacity: isOtherHovered && !isDragging ? 0.9 : 1,
+                      opacity: isOtherHovered && !isDragging ? 0.85 : 1,
                       zIndex: isDragging || pinchingIndex === index ? 100 : zIndex,
                       transition: isDragging || pinchingIndex === index ? 'none' : 'filter 0.3s, opacity 0.3s',
                       transform: isDragging ? 'scale(1.05)' : 'scale(1)',
@@ -641,13 +643,13 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
                 onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute z-[60] transition-all" style={{ top: 24, right: 24, color: isHovering('closeComments') ? '#0b385f' : '#222222', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" style={{ top: pagePadding, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#141414', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="w-full h-full overflow-auto" style={{ padding: 24 }}>
-                <div className="font-body" style={{ fontSize: 9, lineHeight: 2, color: '#222222', opacity: 0.7, wordWrap: 'break-word' }}>
+              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding }}>
+                <div className="font-body" style={{ fontSize: 9, lineHeight: 2, color: '#141414', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
                       <span key={idx}>{comment}{idx < photoComments[currentPhoto.id].length - 1 && ' _ '}</span>
@@ -680,5 +682,6 @@
   </script>
 </body>
 </html>
+
 
 
