@@ -548,12 +548,12 @@
                   style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', touchAction: 'none', transform: `scale(${mainPhotoZoom.scale})`, transition: isZooming ? 'none' : 'transform 0.2s ease-out' }} />
               </div>
 
-              <div className="w-full flex-shrink-0" style={{ position: 'relative', zIndex: 5 }}>
+              <div className="w-full flex-shrink-0" style={{ position: 'relative', zIndex: 5 }} onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center w-full">
                   <div className="flex-1 flex justify-start">
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
                       onMouseEnter={() => setHoveredElement('contact')} onMouseLeave={() => setHoveredElement(null)}
-                      className="transition-all" style={{ color: textColor('contact'), opacity: textOpacity('contact') }}>
+                      className="transition-all" style={{ color: textColor('contact'), opacity: textOpacity('contact'), padding: '12px', margin: '-12px' }}>
                       <svg style={{ width: isMobile ? '0.8125rem' : '1rem', height: isMobile ? '0.8125rem' : '1rem' }} viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/>
                       </svg>
