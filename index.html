@@ -270,7 +270,9 @@
         if (e.touches.length === 2) {
           const t1 = e.touches[0], t2 = e.touches[1];
           const distance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-          mainPinchStart.current = { distance, scale: mainPhotoZoom.scale, x: mainPhotoZoom.x, y: mainPhotoZoom.y };
+          const cx = (t1.clientX + t2.clientX) / 2;
+          const cy = (t1.clientY + t2.clientY) / 2;
+          mainPinchStart.current = { distance, scale: mainPhotoZoom.scale, x: mainPhotoZoom.x, y: mainPhotoZoom.y, cx, cy };
           setIsZooming(true);
           setSwipeStartX(null);
           return;
@@ -283,8 +285,12 @@
         e.preventDefault();
         const t1 = e.touches[0], t2 = e.touches[1];
         const distance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const cx = (t1.clientX + t2.clientX) / 2;
+        const cy = (t1.clientY + t2.clientY) / 2;
         const scale = Math.max(1, Math.min(4, mainPinchStart.current.scale * (distance / mainPinchStart.current.distance)));
-        setMainPhotoZoom(prev => ({ ...prev, scale }));
+        const x = mainPinchStart.current.x + (cx - mainPinchStart.current.cx);
+        const y = mainPinchStart.current.y + (cy - mainPinchStart.current.cy);
+        setMainPhotoZoom({ scale, x, y });
       }, [isMobile]);
 
       const handleTouchEndSwipe = useCallback((e) => {
@@ -545,7 +551,7 @@
                 style={{ flex: '1 1 auto', maxWidth: isMobile ? '100%' : '42rem', minHeight: 0, overflow: isMobile && mainPhotoZoom.scale > 1 ? 'visible' : 'hidden', padding: isMobile ? '8px 0' : '16px 0', cursor: isMobile ? 'default' : 'none' }}
                 onClick={isMobile && mainPhotoZoom.scale <= 1 ? handlePhotoTap : handlePhotoClick} onMouseEnter={() => !isMobile && setHoveredElement('photo')} onMouseLeave={() => !isMobile && setHoveredElement(null)}>
                 <img src={currentPhoto.url} alt={currentPhoto.title} className="object-contain"
-                  style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', touchAction: 'none', transform: `scale(${mainPhotoZoom.scale})`, transition: isZooming ? 'none' : 'transform 0.2s ease-out' }} />
+                  style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', touchAction: 'none', transform: `translate(${mainPhotoZoom.x}px, ${mainPhotoZoom.y}px) scale(${mainPhotoZoom.scale})`, transition: isZooming ? 'none' : 'transform 0.2s ease-out' }} />
               </div>
 
               <div className="w-full flex-shrink-0" style={{ position: 'relative', zIndex: 5 }} onClick={(e) => e.stopPropagation()}>
