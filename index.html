@@ -14,7 +14,7 @@
   <style>
     :root { 
       --accent-blue: #0b385f; 
-      --text-dark: #1A1A1A;
+      --text-dark: #222222;
       --text-medium: #222222;
       --bg-cream: #FAF9F6;
     }
@@ -39,11 +39,11 @@
     }
     
     .font-ui {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: var(--text-medium);
-  }
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: var(--text-medium);
+    }
     
     .font-body {
       font-family: 'Lora', serif;
@@ -51,7 +51,7 @@
     }
     
     textarea::placeholder { 
-      color: rgba(255,255,255,0.5); 
+      color: rgba(255,255,255,0.7); 
       font-family: 'Lora', serif;
     }
   </style>
@@ -167,35 +167,35 @@
         return () => window.removeEventListener('mousemove', handleMouseMove);
       }, []);
 
-     useEffect(() => {
-  const resetInactivity = () => {
-    if (showScreensaver) {
-      setShowScreensaver(false);
-      return;
-    }
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    inactivityTimer.current = setTimeout(() => {
-      const vw = window.innerWidth, vh = window.innerHeight;
-      setScreensaverPosition({
-        x: Math.random() * (vw * 0.3),
-        y: Math.random() * (vh * 0.3)
-      });
-      setShowScreensaver(true);
-    }, 15000);
-  };
-  
-  if (!showScreensaver) {
-    resetInactivity();
-  }
-  
-  const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-  events.forEach(event => window.addEventListener(event, resetInactivity));
-  
-  return () => {
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    events.forEach(event => window.removeEventListener(event, resetInactivity));
-  };
-}, [showScreensaver]);
+      useEffect(() => {
+        const resetInactivity = (e) => {
+          if (showScreensaver) {
+            setShowScreensaver(false);
+            return;
+          }
+          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+          inactivityTimer.current = setTimeout(() => {
+            const vw = window.innerWidth, vh = window.innerHeight;
+            setScreensaverPosition({
+              x: Math.random() * (vw * 0.3),
+              y: Math.random() * (vh * 0.3)
+            });
+            setShowScreensaver(true);
+          }, 15000);
+        };
+        
+        if (!showScreensaver) {
+          resetInactivity();
+        }
+        
+        const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => window.addEventListener(event, resetInactivity));
+        
+        return () => {
+          if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+          events.forEach(event => window.removeEventListener(event, resetInactivity));
+        };
+      }, [showScreensaver]);
 
       const initializePositions = useCallback(() => {
         if (!photos.length) return;
@@ -241,6 +241,12 @@
       const handlePhotoClick = useCallback(() => {
         if (!isMobile) handleNextPhoto();
       }, [isMobile, handleNextPhoto]);
+
+      const handlePhotoTap = useCallback(() => {
+        if (isMobile && !showCommentBox && !showContactSheet && !showCommentsView) {
+          setShowCommentBox(true);
+        }
+      }, [isMobile, showCommentBox, showContactSheet, showCommentsView]);
 
       const handleTouchStartSwipe = useCallback((e) => {
         if (!isMobile || showCommentBox || showContactSheet || showCommentsView) return;
@@ -467,7 +473,7 @@
 
       const currentPhoto = photos[randomOrder[currentPhotoIndex]];
       const isHovering = (el) => hoveredElement === el;
-      const textColor = (el) => isHovering(el) ? '#0b385f' : '#333333';
+      const textColor = (el) => isHovering(el) ? '#0b385f' : '#222222';
       const textOpacity = (el) => isHovering(el) ? 1 : 0.7;
 
       const CustomCursor = ({ isClickable }) => (
@@ -481,6 +487,8 @@
         }} />
       );
 
+      const pagePadding = isMobile ? 12 : 24;
+
       return (
         <div className="w-screen relative" style={{ cursor: 'none', overflow: 'hidden', position: 'fixed', inset: 0, touchAction: 'pan-y', backgroundColor: '#FAF9F6' }}
           onTouchStart={handleTouchStartSwipe} onTouchEnd={handleTouchEndSwipe}>
@@ -489,26 +497,26 @@
 
           <div className={`absolute inset-0 flex items-center justify-center z-50 ${showIntro ? 'opacity-100' : 'opacity-0'}`}
             style={{ transition: 'opacity 2s ease-out', pointerEvents: showIntro ? 'auto' : 'none', backgroundColor: '#FAF9F6' }}>
-            <h1 className="font-loader text-2xl md:text-4xl px-4 text-center">{projectTitle}</h1>
+            <h1 className="font-loader text-2xl md:text-4xl px-4 text-center" style={{ color: '#222222' }}>{projectTitle}</h1>
           </div>
 
           {!showIntro && currentPhoto && (
-            <div className="w-full flex flex-col items-center justify-between" style={{ height: '100%', padding: isMobile ? '12px' : '24px', overflow: 'hidden' }}>
+            <div className="w-full flex flex-col items-center justify-between" style={{ height: '100%', padding: pagePadding, overflow: 'hidden' }}>
               
               <div className="w-full text-center cursor-pointer flex-shrink-0" onClick={handleTitleClick}
                 onMouseEnter={() => setHoveredElement('title')} onMouseLeave={() => setHoveredElement(null)}>
-                <h2 className="font-ui transition-all" style={{ fontSize: isMobile ? 11 : 13 }}
-                  style={{ color: isHovering('title') ? '#0b385f' : '#333333', opacity: textOpacity('title') }}>{projectTitle}</h2>
+                <h2 className="font-ui transition-all"
+                  style={{ fontSize: isMobile ? 11 : 13, color: isHovering('title') ? '#0b385f' : '#222222', opacity: textOpacity('title') }}>{projectTitle}</h2>
               </div>
 
               <div className="flex items-center justify-center w-full"
                 style={{ flex: '1 1 auto', maxWidth: isMobile ? '100%' : '42rem', minHeight: 0, overflow: 'hidden', padding: isMobile ? '8px 0' : '16px 0', cursor: isMobile ? 'default' : 'none' }}
-                onClick={handlePhotoClick} onMouseEnter={() => !isMobile && setHoveredElement('photo')} onMouseLeave={() => !isMobile && setHoveredElement(null)}>
+                onClick={isMobile ? handlePhotoTap : handlePhotoClick} onMouseEnter={() => !isMobile && setHoveredElement('photo')} onMouseLeave={() => !isMobile && setHoveredElement(null)}>
                 <img src={currentPhoto.url} alt={currentPhoto.title} className="object-contain"
                   style={{ maxWidth: '100%', maxHeight: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', touchAction: 'pan-x pan-y' }} />
               </div>
 
-              <div className="w-full flex-shrink-0" style={{ paddingTop: isMobile ? '8px' : '12px', position: 'relative', zIndex: 5 }}>
+              <div className="w-full flex-shrink-0" style={{ position: 'relative', zIndex: 5 }}>
                 <div className="flex items-center w-full">
                   <div className="flex-1 flex justify-start">
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
@@ -542,7 +550,7 @@
 
           {showCommentBox && (
             <div className="fixed z-50" onClick={handleCommentBoxOutsideClick}
-              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div ref={commentBoxRef} style={{ width: '90%', maxWidth: isMobile ? '100%' : '42rem', textAlign: 'center', padding: '0 20px', minHeight: 200 }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ position: 'relative', minHeight: 150, maxHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {!showMergedMessage && !dissolving && (
@@ -584,13 +592,13 @@
               <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(false); }}
                 onMouseEnter={() => setHoveredElement('closeContact')} onMouseLeave={() => setHoveredElement(null)}
                 className="absolute top-4 right-4 z-[60] transition-all" 
-                style={{ color: isHovering('closeContact') ? '#0b385f' : '#333333', opacity: isHovering('closeContact') ? 1 : 0.5 }}>
+                style={{ color: isHovering('closeContact') ? '#0b385f' : '#222222', opacity: isHovering('closeContact') ? 1 : 0.5 }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
               <p className="font-ui absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[60]"
-                style={{ pointerEvents: 'none', fontSize: isMobile ? 11 : 12, opacity: 0.7, color: '#333333' }}>
+                style={{ pointerEvents: 'none', fontSize: isMobile ? 11 : 12, opacity: 0.7, color: '#222222' }}>
                 Reorder freely
               </p>
               <div className="w-full h-full relative">
@@ -604,8 +612,8 @@
                   return (
                     <div key={photo.id} className="absolute" style={{
                       left: pos.x, top: pos.y, width: pos.width,
-                      filter: isOtherHovered && !isDragging ? 'blur(2px)' : 'none',
-                      opacity: isOtherHovered && !isDragging ? 0.5 : 1,
+                      filter: isOtherHovered && !isDragging ? 'blur(0.5px)' : 'none',
+                      opacity: isOtherHovered && !isDragging ? 0.9 : 1,
                       zIndex: isDragging || pinchingIndex === index ? 100 : zIndex,
                       transition: isDragging || pinchingIndex === index ? 'none' : 'filter 0.3s, opacity 0.3s',
                       transform: isDragging ? 'scale(1.05)' : 'scale(1)',
@@ -633,13 +641,13 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
                 onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute z-[60] transition-all" style={{ top: 24, right: 24, color: isHovering('closeComments') ? '#0b385f' : '#333333', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" style={{ top: 24, right: 24, color: isHovering('closeComments') ? '#0b385f' : '#222222', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
               <div className="w-full h-full overflow-auto" style={{ padding: 24 }}>
-                <div className="font-body" style={{ fontSize: 9, lineHeight: 2, color: '#333333', opacity: 0.7, wordWrap: 'break-word' }}>
+                <div className="font-body" style={{ fontSize: 9, lineHeight: 2, color: '#222222', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
                       <span key={idx}>{comment}{idx < photoComments[currentPhoto.id].length - 1 && ' _ '}</span>
@@ -653,15 +661,15 @@
           {showScreensaver && (
             <div className="fixed inset-0 z-[200]" style={{ backgroundColor: 'rgba(250,249,246,0.95)' }} onClick={() => setShowScreensaver(false)}>
               <video 
-  autoPlay 
-  loop 
-  muted 
-  playsInline
-  webkit-playsinline="true"
-  ref={(el) => { if (el) el.play().catch(() => {}); }}
-  style={{ position: 'absolute', left: screensaverPosition.x, top: screensaverPosition.y, width: '70%', height: 'auto', maxHeight: '70%', objectFit: 'contain' }}>
-  <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
-</video>
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                webkit-playsinline="true"
+                ref={(el) => { if (el) el.play().catch(() => {}); }}
+                style={{ position: 'absolute', left: screensaverPosition.x, top: screensaverPosition.y, width: '70%', height: 'auto', maxHeight: '70%', objectFit: 'contain' }}>
+                <source src={`https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${githubBranch}/Paramo.mp4`} type="video/mp4" />
+              </video>
             </div>
           )}
         </div>
