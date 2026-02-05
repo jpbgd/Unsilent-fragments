@@ -345,22 +345,18 @@
         setTimeout(() => setDissolveOpacity(0), 50);
         
         setTimeout(() => {
-          setShowMergedMessage(true);
-          setMergedMessageOpacity(1);
-        }, 2500);
-        
-        setTimeout(() => {
           setDissolving(false);
           setDissolveText('');
-        }, 2550);
-        
-        setTimeout(() => {
-          setMergedMessageOpacity(0);
+          setShowMergedMessage(true);
+          setMergedMessageOpacity(1);
           setTimeout(() => {
-            setShowMergedMessage(false);
-            setShowCommentBox(false);
-          }, 500);
-        }, 4500);
+            setMergedMessageOpacity(0);
+            setTimeout(() => {
+              setShowMergedMessage(false);
+              setShowCommentBox(false);
+            }, 500);
+          }, 2000);
+        }, 2550);
       };
 
       const handleCommentBoxOutsideClick = useCallback((e) => {
@@ -750,3 +746,4 @@
   </script>
 </body>
 </html>
+
