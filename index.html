@@ -29,7 +29,7 @@
     body { cursor: none; }
     * { cursor: none !important; box-sizing: border-box; }
     img { pointer-events: none; -webkit-user-drag: none; }
-    input, textarea { font-size: 18px !important; }
+    input, textarea { font-size: 17px !important; }
     #root:empty { display: none; }
     #root { opacity: 0; animation: fadeIn 0.3s ease-in 0.1s forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
@@ -56,22 +56,22 @@
     textarea::placeholder { 
        color: #FFFFFF !important;
        font-family: 'Crimson Pro', serif;
-       font-size: 18px !important;
+       font-size: 17px !important;
        opacity: 1 !important;
     }
     textarea::-webkit-input-placeholder { 
       color: #FFFFFF !important; 
-      font-size: 18px !important;
+      font-size: 17px !important;
       opacity: 1 !important; 
     }
     textarea::-moz-placeholder { 
       color: #FFFFFF !important; 
-      font-size: 18px !important;
+      font-size: 17px !important;
       opacity: 1 !important; 
     }
     textarea:-ms-input-placeholder { 
       color: #FFFFFF !important; 
-      font-size: 18px !important;
+      font-size: 17px !important;
       opacity: 1 !important; 
     }
   </style>
@@ -641,7 +641,7 @@
                   {dissolving && (
                     <>
                       <textarea disabled value={dissolveText} className="font-body" style={{ width: '100%', maxWidth: isMobile ? '100%' : '70%', height: 'auto', minHeight: 60, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: '18px', fontWeight: 400, lineHeight: 1.1, padding: isMobile ? '10px 5px' : '10px', color: 'transparent', overflow: 'auto' }} />
-                      <div className="font-body" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, fontSize: '18px', fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '10px 5px' : '10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pointerEvents: 'none' }}>
+                      <div className="font-body" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '10px 5px' : '10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pointerEvents: 'none' }}>
                         <div style={{ maxWidth: isMobile ? '100%' : '70%', width: '100%' }}>
                           {dissolveText}
                         </div>
@@ -649,7 +649,7 @@
                     </>
                   )}
                   {showMergedMessage && (
-                    <p className="font-body" style={{ position: 'absolute', margin: 0, fontSize: '18px', fontWeight: 400, lineHeight: 1.1, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
+                    <p className="font-body" style={{ position: 'absolute', margin: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.1, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
                       Gracias. The image speaks through you now. 
                     </p>
                   )}
