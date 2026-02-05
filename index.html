@@ -51,6 +51,7 @@
     .font-body {
       font-family: 'Crimson Pro', serif;
       font-weight: 400;
+      letter-spacing: 0.01em;
     }
     
     textarea::placeholder { 
@@ -622,7 +623,7 @@
                   <button onClick={handleCloseCommentBox}
                     onMouseEnter={() => setHoveredElement('closeComment')} onMouseLeave={() => setHoveredElement(null)}
                     className="absolute transition-all" 
-                    style={{ top: -30, right: isMobile ? 5 : 'calc(15% - 10px)', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
+                    style={{ top: isMobile ? -45 : -40, right: isMobile ? 5 : 'calc(15% - 10px)', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -728,7 +729,7 @@
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: 35 }}>
+              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 40 }}>
                 <div className="font-body" style={{ fontSize: 9, lineHeight: 1.2, color: '#121212', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
