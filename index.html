@@ -356,7 +356,7 @@
               setShowCommentBox(false);
             }, 500);
           }, 2000);
-        }, 2550);
+        }, 2050);
       };
 
       const handleCommentBoxOutsideClick = useCallback((e) => {
@@ -618,7 +618,7 @@
                   </button>
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 60 }}>
                   {!showMergedMessage && !dissolving && (
                     <textarea ref={textareaRef} value={commentText} onChange={(e) => setCommentText(e.target.value)}
                       placeholder="The image finds its voice through your words. A memory, a feeling, or anything it evokes in you..."
@@ -628,9 +628,11 @@
                       style={{ width: '100%', maxWidth: isMobile ? '100%' : '70%', height: 'auto', minHeight: 60, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: isMobile ? 17 : 18, fontWeight: 400, lineHeight: 1.1, padding: isMobile ? '10px 5px' : '10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.4)', overflow: 'auto', caretColor: '#ffffff' }} />
                   )}
                   {dissolving && (
-                    <p className="font-body" style={{ margin: 0, fontSize: isMobile ? 17 : 18, fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '20px 5px' : '20px 10px', maxWidth: isMobile ? '100%' : '70%' }}>
-                      {dissolveText}
-                    </p>
+                    <div className="font-body" style={{ position: 'absolute', top: 0, left: 0, right: 0, margin: 0, fontSize: isMobile ? 17 : 18, fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '10px 5px' : '10px', maxWidth: '100%', width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                      <div style={{ maxWidth: isMobile ? '100%' : '70%', width: '100%' }}>
+                        {dissolveText}
+                      </div>
+                    </div>
                   )}
                   {showMergedMessage && (
                     <p className="font-body" style={{ margin: 0, fontSize: isMobile ? 15 : 16, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
