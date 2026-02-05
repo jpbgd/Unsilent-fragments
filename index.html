@@ -611,7 +611,7 @@
                   <button onClick={handleCloseCommentBox}
                     onMouseEnter={() => setHoveredElement('closeComment')} onMouseLeave={() => setHoveredElement(null)}
                     className="absolute transition-all" 
-                    style={{ top: -40, right: 0, color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
+                    style={{ top: -50, right: 20, color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -625,7 +625,7 @@
                       className="font-body"
                       spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
                       data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"
-                      style={{ width: '100%', height: 'auto', minHeight: 60, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 400, lineHeight: 1.1, padding: '10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.4)', overflow: 'auto', caretColor: '#ffffff' }} />
+                      style={{ width: '100%', maxWidth: isMobile ? '100%' : '85%', height: 'auto', minHeight: 60, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: 16, fontWeight: 400, lineHeight: 1.1, padding: '10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.4)', overflow: 'auto', caretColor: '#ffffff' }} />
                   )}
                   {dissolving && (
                     <p className="font-body" style={{ margin: 0, fontSize: 16, fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2s ease-out, filter 2s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: '20px 10px' }}>
@@ -707,12 +707,12 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
                 onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute z-[60] transition-all" style={{ top: pagePadding + 8, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" style={{ top: pagePadding + 20, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 8 }}>
+              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 20 }}>
                 <div className="font-body" style={{ fontSize: 9, lineHeight: 1.2, color: '#121212', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
