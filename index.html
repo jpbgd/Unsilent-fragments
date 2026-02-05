@@ -347,6 +347,9 @@
         setTimeout(() => {
           setDissolving(false);
           setDissolveText('');
+        }, 2550);
+        
+        setTimeout(() => {
           setShowMergedMessage(true);
           setMergedMessageOpacity(1);
           setTimeout(() => {
@@ -356,7 +359,7 @@
               setShowCommentBox(false);
             }, 500);
           }, 2000);
-        }, 2500);
+        }, 2550);
       };
 
       const handleCommentBoxOutsideClick = useCallback((e) => {
@@ -611,7 +614,7 @@
                   <button onClick={handleCloseCommentBox}
                     onMouseEnter={() => setHoveredElement('closeComment')} onMouseLeave={() => setHoveredElement(null)}
                     className="absolute transition-all" 
-                    style={{ top: -50, right: isMobile ? 5 : '15%', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
+                    style={{ top: -50, right: isMobile ? 5 : 'calc(15% - 10px)', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -707,12 +710,12 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
                 onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute z-[60] transition-all" style={{ top: pagePadding + 32, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" style={{ top: pagePadding - 10, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 32 }}>
+              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 20 }}>
                 <div className="font-body" style={{ fontSize: 9, lineHeight: 1.2, color: '#121212', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
@@ -746,3 +749,4 @@
   </script>
 </body>
 </html>
+
