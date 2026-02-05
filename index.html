@@ -126,6 +126,7 @@
       const initialImagePos = useRef({ x: 0, y: 0 });
       const lastClickTime = useRef(0);
       const commentBoxRef = useRef(null);
+      const textareaRef = useRef(null);
 
       const photoFiles = [
         'Untitled_250619.jpg', 'Untitled_241221.jpg', 'Untitiled_241208.jpg',
@@ -210,6 +211,13 @@
           events.forEach(event => window.removeEventListener(event, resetInactivity));
         };
       }, [showScreensaver]);
+
+      // Auto-focus textarea when comment box opens
+      useEffect(() => {
+        if (showCommentBox && textareaRef.current && !dissolving && !showMergedMessage) {
+          textareaRef.current.focus();
+        }
+      }, [showCommentBox, dissolving, showMergedMessage]);
 
       const initializePositions = useCallback(() => {
         if (!photos.length) return;
@@ -359,6 +367,13 @@
           }
         }
       }, [dissolving, showMergedMessage]);
+
+      const handleCloseCommentBox = () => {
+        if (!dissolving && !showMergedMessage) {
+          setShowCommentBox(false);
+          setCommentText('');
+        }
+      };
 
       const handleImageMouseDown = (e, index) => {
         e.preventDefault();
@@ -561,7 +576,7 @@
                     <button onClick={(e) => { e.stopPropagation(); setShowContactSheet(true); }}
                       onMouseEnter={() => setHoveredElement('contact')} onMouseLeave={() => setHoveredElement(null)}
                       className="transition-all" style={{ color: textColor('contact'), opacity: textOpacity('contact'), padding: '12px', margin: '-12px' }}>
-                      <svg style={{ width: isMobile ? '0.8125rem' : '1rem', height: isMobile ? '0.8125rem' : '1rem' }} viewBox="0 0 24 24" fill="currentColor">
+                      <svg style={{ width: isMobile ? '1rem' : '1.125rem', height: isMobile ? '1rem' : '1.125rem' }} viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/>
                       </svg>
                     </button>
@@ -589,11 +604,23 @@
 
           {showCommentBox && (
             <div className="fixed z-50" onClick={handleCommentBoxOutsideClick}
-              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div ref={commentBoxRef} style={{ width: '90%', maxWidth: isMobile ? '100%' : '42rem', textAlign: 'center', padding: '0 20px' }} onClick={(e) => e.stopPropagation()}>
+              style={{ inset: 0, backgroundColor: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div ref={commentBoxRef} style={{ width: '90%', maxWidth: isMobile ? '100%' : '42rem', textAlign: 'center', padding: '0 20px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                
+                {!showMergedMessage && !dissolving && (
+                  <button onClick={handleCloseCommentBox}
+                    onMouseEnter={() => setHoveredElement('closeComment')} onMouseLeave={() => setHoveredElement(null)}
+                    className="absolute transition-all" 
+                    style={{ top: -40, right: 0, color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {!showMergedMessage && !dissolving && (
-                    <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} autoFocus
+                    <textarea ref={textareaRef} value={commentText} onChange={(e) => setCommentText(e.target.value)}
                       placeholder="The image finds its voice through your words. A memory, a feeling, or anything it evokes in you..."
                       className="font-body"
                       spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
@@ -614,10 +641,9 @@
                 {!showMergedMessage && !dissolving && (
                   <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <button onClick={handleSubmitComment} onMouseEnter={() => setHoveredElement('submit')} onMouseLeave={() => setHoveredElement(null)}
-                      style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: !isMobile && isHovering('submit') ? '#0b385f' : 'rgba(255,255,255,0.9)', transition: 'color 0.2s' }}>
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"/>
-                      </svg>
+                      className="font-ui"
+                      style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? '0.6875rem' : '0.75rem', textDecoration: 'underline', textDecorationThickness: '0.5px', textUnderlineOffset: '3px', transition: 'opacity 0.2s', opacity: !isMobile && isHovering('submit') ? 0.7 : 1 }}>
+                      Share
                     </button>
                   </div>
                 )}
@@ -681,12 +707,12 @@
               {!isMobile && <CustomCursor isClickable={hoveredElement !== null} />}
               <button onClick={(e) => { e.stopPropagation(); setShowCommentsView(false); }}
                 onMouseEnter={() => setHoveredElement('closeComments')} onMouseLeave={() => setHoveredElement(null)}
-                className="absolute z-[60] transition-all" style={{ top: pagePadding, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
+                className="absolute z-[60] transition-all" style={{ top: pagePadding + 8, right: pagePadding, color: isHovering('closeComments') ? '#0b385f' : '#121212', opacity: isHovering('closeComments') ? 1 : 0.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding }}>
+              <div className="w-full h-full overflow-auto" style={{ padding: pagePadding, paddingTop: pagePadding + 8 }}>
                 <div className="font-body" style={{ fontSize: 9, lineHeight: 1.2, color: '#121212', opacity: 0.7, wordWrap: 'break-word' }}>
                   {photoComments[currentPhoto.id]?.length > 0 ? (
                     photoComments[currentPhoto.id].map((comment, idx) => (
