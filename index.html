@@ -11,6 +11,7 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root { 
       --accent-blue: #0b385f; 
@@ -51,7 +52,6 @@
     .font-body {
       font-family: 'Crimson Pro', serif;
       font-weight: 400;
-      letter-spacing: 0.01em;
     }
     
     textarea::placeholder { 
@@ -81,6 +81,10 @@
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
+
+    const SUPABASE_URL = 'https://edcjpwijpnzokwhuclzh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkY2pwd2lqcG56b2t3aHVjbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk0MDA0OTEsImV4cCI6MjA1NDk3NjQ5MX0.lQMa5AOY4xH_QK4bajzr9A_7nJ7361CRvchF5mVQuYo';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const PhotoViewer = () => {
       const projectTitle = "Silent Fragments";
@@ -178,15 +182,27 @@
       }, []);
 
       useEffect(() => {
-        try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) setPhotoComments(JSON.parse(saved));
-        } catch (e) {}
+        const loadComments = async () => {
+          try {
+            const { data, error } = await supabase
+              .from('comments')
+              .select('*')
+              .order('created_at', { ascending: true });
+            
+            if (data) {
+              const grouped = data.reduce((acc, comment) => {
+                if (!acc[comment.photo_id]) acc[comment.photo_id] = [];
+                acc[comment.photo_id].push(comment.comment_text);
+                return acc;
+              }, {});
+              setPhotoComments(grouped);
+            }
+          } catch (e) {
+            console.error('Error loading comments:', e);
+          }
+        };
+        loadComments();
       }, []);
-
-      useEffect(() => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(photoComments)); } catch (e) {}
-      }, [photoComments]);
 
       useEffect(() => {
         const handleMouseMove = (e) => setCursorPosition({ x: e.clientX, y: e.clientY });
@@ -338,7 +354,7 @@
         setTimeout(() => setShowIntro(false), 3000);
       };
 
-      const handleSubmitComment = () => {
+      const handleSubmitComment = async () => {
         if (!commentText.trim()) return;
         const textToSave = commentText.trim();
         const currentPhoto = photos[randomOrder[currentPhotoIndex]];
@@ -348,9 +364,22 @@
         setDissolving(true);
         setCommentText('');
 
+        // Guardar en Supabase
+        try {
+          await supabase.from('comments').insert({
+            photo_id: currentPhoto.id,
+            photo_title: currentPhoto.title,
+            photo_date: currentPhoto.date,
+            comment_text: textToSave
+          });
+        } catch (error) {
+          console.error('Error saving comment:', error);
+        }
+
+        // Actualizar estado local
         setPhotoComments(prev => {
           const curr = prev[currentPhoto.id] || [];
-          const newComments = curr.length >= MAX_COMMENTS ? [...curr.slice(1), textToSave] : [...curr, textToSave];
+          const newComments = [...curr, textToSave];
           return { ...prev, [currentPhoto.id]: newComments };
         });
 
@@ -623,34 +652,34 @@
                   <button onClick={handleCloseCommentBox}
                     onMouseEnter={() => setHoveredElement('closeComment')} onMouseLeave={() => setHoveredElement(null)}
                     className="absolute transition-all" 
-                    style={{ top: isMobile ? -65 : -50, right: isMobile ? 5 : 'calc(15% - 10px)', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
+                    style={{ top: -30, right: isMobile ? 5 : 'calc(15% - 10px)', color: isHovering('closeComment') ? '#0b385f' : 'rgba(255,255,255,0.7)', opacity: isHovering('closeComment') ? 1 : 0.7 }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 80, marginTop: -20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 40, marginTop: -20 }}>
                   {!showMergedMessage && !dissolving && (
                     <textarea ref={textareaRef} value={commentText} onChange={(e) => setCommentText(e.target.value)}
                       placeholder="The image finds its voice through your words. A memory, a feeling, or anything it evokes in you..."
                       className="font-body"
                       spellCheck="false" autoComplete="off" autoCorrect="off" autoCapitalize="off"
                       data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"
-                      style={{ width: '100%', maxWidth: isMobile ? '95%' : '70%', height: 'auto', minHeight: 80, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: '18px', fontWeight: 400, lineHeight: 1.3, padding: isMobile ? '0 8px 10px 8px' : '0 10px 10px 10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.4)', overflow: 'auto', caretColor: '#ffffff' }} />
+                      style={{ width: '100%', maxWidth: isMobile ? '100%' : '70%', height: 'auto', minHeight: 40, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: '18px', fontWeight: 400, lineHeight: 1.1, padding: isMobile ? '0 5px 10px 5px' : '0 10px 10px 10px', cursor: isMobile ? 'auto' : 'none', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.4)', overflow: 'auto', caretColor: '#ffffff' }} />
                   )}
                   {dissolving && (
                     <>
-                      <textarea disabled value={dissolveText} className="font-body" style={{ width: '100%', maxWidth: isMobile ? '95%' : '70%', height: 'auto', minHeight: 80, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: '18px', fontWeight: 400, lineHeight: 1.3, padding: isMobile ? '0 8px 10px 8px' : '0 10px 10px 10px', color: 'transparent', overflow: 'auto' }} />
-                      <div className="font-body" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.3, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '0 8px 10px 8px' : '0 10px 10px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <div style={{ maxWidth: isMobile ? '95%' : '70%', width: '100%' }}>
+                      <textarea disabled value={dissolveText} className="font-body" style={{ width: '100%', maxWidth: isMobile ? '100%' : '70%', height: 'auto', minHeight: 40, maxHeight: '40vh', background: 'transparent', border: 'none', outline: 'none', resize: 'none', textAlign: 'center', fontSize: '18px', fontWeight: 400, lineHeight: 1.1, padding: isMobile ? '0 5px 10px 5px' : '0 10px 10px 10px', color: 'transparent', overflow: 'auto' }} />
+                      <div className="font-body" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.1, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: dissolveOpacity, filter: `blur(${(1-dissolveOpacity)*8}px)`, transition: 'opacity 2.5s ease-out, filter 2.5s ease-out', whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: 'center', padding: isMobile ? '0 5px 10px 5px' : '0 10px 10px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <div style={{ maxWidth: isMobile ? '100%' : '70%', width: '100%' }}>
                           {dissolveText}
                         </div>
                       </div>
                     </>
                   )}
                   {showMergedMessage && (
-                    <p className="font-body" style={{ position: 'absolute', margin: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.3, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
+                    <p className="font-body" style={{ position: 'absolute', margin: 0, fontSize: '17px', fontWeight: 400, lineHeight: 1.1, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.4)', opacity: mergedMessageOpacity, transition: 'opacity 0.5s ease-out' }}>
                       Gracias. The image speaks through you now. 
                     </p>
                   )}
@@ -763,4 +792,5 @@
   </script>
 </body>
 </html>
+
 
